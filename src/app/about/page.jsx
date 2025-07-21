@@ -52,7 +52,7 @@ export default function About() {
         <div className="flex flex-col md:flex-row justify-center gap-8 flex-wrap">
           {[
             { name: 'MARIA JOSE VERA', img: '/nosotros/majo.jpg', alt: 'Maria Jose Vera' },
-            { name: 'MARCO DURAN', img: '/nosotros/perfil-predeterminado.jpeg', alt: 'Marco Duran' },
+            { name: 'MARCO DURAN', img: '/nosotros/marco.jpg', alt: 'Marco Duran' },
             { name: 'DANIEL MANCILLA', img: '/nosotros/dani.jpg', alt: 'Daniel Mancilla' },
             { name: 'SANTIAGO TAPIA', img: '/nosotros/santi.jpg', alt: 'Santiago Tapia' },
             { name: 'HUGO ACOSTA', img: '/nosotros/hugo.jpg', alt: 'Hugo Acosta' },
