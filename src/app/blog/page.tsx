@@ -14,7 +14,7 @@ export default function Blog() {
     },
     {
       title: 'HISTORIA DEL VINO EN CHILE',
-      img: '/img/vinos-estanteria.jpg',
+      img: '/img/historia.jpg',
       alt: 'Historia del Vino',
       date: '20 de Julio de 2025',
       content: 'Explora la rica tradición vitivinícola de Chile y cómo <strong>VINOS AURA</strong> contribuye a su legado con vinos de calidad excepcional.',
