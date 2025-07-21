@@ -6,7 +6,7 @@ export default function Blog() {
   const posts = [
     {
       title: 'LA ARTE DE LA CATA DE VINOS',
-      img: '/img/blog1.jpg',
+      img: '/img/vinos-estanteria.jpg',
       alt: 'Cata de Vinos',
       date: '21 de Julio de 2025',
       content: 'Descubre los secretos detrás de una buena cata de vinos con <strong>VINOS AURA</strong>. Aprende a identificar aromas, sabores y texturas en cada sorbo.',
@@ -14,7 +14,7 @@ export default function Blog() {
     },
     {
       title: 'HISTORIA DEL VINO EN CHILE',
-      img: '/img/blog2.jpg',
+      img: '/img/vinos-estanteria.jpg',
       alt: 'Historia del Vino',
       date: '20 de Julio de 2025',
       content: 'Explora la rica tradición vitivinícola de Chile y cómo <strong>VINOS AURA</strong> contribuye a su legado con vinos de calidad excepcional.',
@@ -22,7 +22,7 @@ export default function Blog() {
     },
     {
       title: 'EL MARIDAJE PERFECTO',
-      img: '/img/blog3.jpg',
+      img: '/img/vinos-estanteria.jpg',
       alt: 'Maridaje Perfecto',
       date: '19 de Julio de 2025',
       content: 'Encuentra las mejores combinaciones de alimentos y vinos con consejos de nuestros expertos en <strong>VINOS AURA</strong>.',
@@ -30,7 +30,7 @@ export default function Blog() {
     },
     {
       title: 'SOSTENIBILIDAD EN LA VINICULTURA',
-      img: '/img/blog4.jpg',
+      img: '/img/vinos-estanteria.jpg',
       alt: 'Sostenibilidad',
       date: '18 de Julio de 2025',
       content: 'Conoce las prácticas sostenibles que <strong>VINOS AURA</strong> implementa para cuidar el medio ambiente y producir vinos orgánicos.',
