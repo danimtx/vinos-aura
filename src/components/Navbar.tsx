@@ -34,17 +34,26 @@ export default function Navbar() {
             </button>
           </div>
 
-          {/* Logo (Center on mobile, Left on desktop) */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:relative lg:left-0 lg:top-0 lg:translate-x-0 lg:translate-y-0">
+          {/* Logo and Text (Center on mobile, Left on desktop) */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:relative lg:left-0 lg:top-0 lg:translate-x-0 lg:translate-y-0 flex items-center space-x-2">
             <Link href="/" className="flex flex-shrink-0 items-center">
               <Image
-                className="h-10 w-auto transition-transform duration-300 hover:scale-105"
+                className="h-12 w-auto transition-all duration-300 hover:scale-105 hover:rotate-3 hover:brightness-110"
                 src="/logo/logo-blanco.png"
                 alt="Vinos Aura Logo"
-                width={100}
-                height={40}
+                width={120}
+                height={48}
                 priority
               />
+              <span
+                className="text-xl font-bold font-['EB_Garamond'] hidden lg:inline"
+                style={{ 
+                  color: '#B31B1B', 
+                  textShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)' 
+                }}
+              >
+                Vinos Aura
+              </span>
             </Link>
           </div>
 
@@ -54,18 +63,19 @@ export default function Navbar() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-sm font-medium leading-6 px-3 py-2 rounded-md transition-all duration-200 ease-in-out"
+                className="relative text-sm font-medium leading-6 px-3 py-2 rounded-md transition-all duration-300 ease-in-out group"
                 style={{ color: '#D9C3A3' }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.color = '#B31B1B';
-                  e.currentTarget.style.backgroundColor = 'rgba(217, 195, 163, 0.1)';
+                  e.currentTarget.style.color = '#C5A55B';
+                  e.currentTarget.style.transform = 'scale(1.05)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.color = '#D9C3A3';
-                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.transform = 'scale(1)';
                 }}
               >
                 {item.name}
+                <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-[#C5A55B] transition-all duration-300 group-hover:w-full"></span>
               </Link>
             ))}
           </div>
@@ -94,17 +104,25 @@ export default function Navbar() {
         >
           <div className="w-full px-6 py-6">
             <div className="flex items-center justify-between">
-              {/* Logo in mobile menu */}
-              <Link href="/" className="p-1.5" onClick={() => setMobileMenuOpen(false)}>
-                <span className="sr-only">Vinos Aura</span>
+              {/* Logo and Text in mobile menu */}
+              <Link href="/" className="flex items-center space-x-2" onClick={() => setMobileMenuOpen(false)}>
                 <Image
-                  className="h-8 w-auto"
+                  className="h-10 w-auto transition-all duration-300 hover:scale-105 hover:rotate-3 hover:brightness-110"
                   src="/logo/logo-blanco.png"
                   alt="Vinos Aura Logo"
-                  width={80}
-                  height={32}
+                  width={100}
+                  height={40}
                   priority
                 />
+                <span
+                  className="text-lg font-bold font-['EB_Garamond']"
+                  style={{ 
+                    color: '#B31B1B', 
+                    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)' 
+                  }}
+                >
+                  Vinos Aura
+                </span>
               </Link>
               {/* Close button */}
               <button
@@ -124,19 +142,20 @@ export default function Navbar() {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="block rounded-lg px-4 py-3 text-base font-medium transition-all duration-200 ease-in-out"
+                    className="relative block rounded-lg px-4 py-3 text-base font-medium transition-all duration-300 ease-in-out group"
                     style={{ color: '#D9C3A3' }}
                     onClick={() => setMobileMenuOpen(false)}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#B31B1B';
-                      e.currentTarget.style.color = '#3E3E3E';
+                      e.currentTarget.style.color = '#C5A55B';
+                      e.currentTarget.style.transform = 'scale(1.05)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
                       e.currentTarget.style.color = '#D9C3A3';
+                      e.currentTarget.style.transform = 'scale(1)';
                     }}
                   >
                     {item.name}
+                    <span className="absolute left-0 bottom-0 w-0 h-[2px] bg-[#C5A55B] transition-all duration-300 group-hover:w-full"></span>
                   </Link>
                 ))}
               </div>
