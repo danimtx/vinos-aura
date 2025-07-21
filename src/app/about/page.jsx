@@ -51,12 +51,12 @@ export default function About() {
         </h2>
         <div className="flex flex-col md:flex-row justify-center gap-8 flex-wrap">
           {[
-            { name: 'MARIA JOSE VERA', img: '/nosotros/perfil-predeterminado.jpeg', alt: 'Maria Jose Vera' },
+            { name: 'MARIA JOSE VERA', img: '/nosotros/majo.jpg', alt: 'Maria Jose Vera' },
             { name: 'MARCO DURAN', img: '/nosotros/perfil-predeterminado.jpeg', alt: 'Marco Duran' },
-            { name: 'DANIEL MANCILLA', img: '/nosotros/perfil-predeterminado.jpeg', alt: 'Daniel Mancilla' },
-            { name: 'SANTIAGO TAPIA', img: '/nosotros/perfil-predeterminado.jpeg', alt: 'Santiago Tapia' },
-            { name: 'HUGO ACOSTA', img: '/nosotros/perfil-predeterminado.jpeg', alt: 'Hugo Acosta' },
-            { name: 'VICTOR TAJA', img: '/nosotros/perfil-predeterminado.jpeg', alt: 'Victor Taja' },
+            { name: 'DANIEL MANCILLA', img: '/nosotros/dani.jpg', alt: 'Daniel Mancilla' },
+            { name: 'SANTIAGO TAPIA', img: '/nosotros/santi.jpg', alt: 'Santiago Tapia' },
+            { name: 'HUGO ACOSTA', img: '/nosotros/hugo.jpg', alt: 'Hugo Acosta' },
+            { name: 'VICTOR TAJA', img: '/nosotros/vic.jpg', alt: 'Victor Taja' },
           ].map((member) => (
             <div key={member.name} className="max-w-xs">
               <Image
