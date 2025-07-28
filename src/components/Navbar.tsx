@@ -32,7 +32,7 @@ const navigation = [
   { name: 'VINOS', href: '/vinos' },
   { name: 'CONTACTO', href: '/contact' },
   { name: 'BLOG', href: '/blog' },
-  { name: 'POLÍTICA DE PRIVACIDAD', href: '/privacy' },
+  //{ name: 'POLÍTICA DE PRIVACIDAD', href: '/privacy' },
 ];
 
 export default function Navbar() {
@@ -74,7 +74,7 @@ export default function Navbar() {
               <span
                 className="text-xl font-bold font-['EB_Garamond'] hidden lg:inline"
                 style={{
-                  color: colors.crimson,
+                  color: colors.warmBeige,
                   textShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)'
                 }}
               >
