@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, addDoc, query, where, onSnapshot, serverTimestamp, updateDoc, deleteDoc, runTransaction } from 'firebase/firestore';
+import { collection, doc, getDoc, addDoc, query, where, onSnapshot, serverTimestamp, updateDoc, deleteDoc, runTransaction, orderBy } from 'firebase/firestore'; // <-- Asegúrate que 'orderBy' esté aquí
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import { UserCircleIcon, HandThumbUpIcon, HandThumbDownIcon, ArrowUturnLeftIcon } from '@heroicons/react/24/outline';
@@ -113,7 +113,7 @@ export default function BlogPostDetailPage() {
     const qComments = query(
       collection(db, 'comments'),
       where('postId', '==', postId),
-      //orderBy('createdAt', 'asc')
+      orderBy('createdAt', 'asc')
     );
 
     const unsubscribeComments = onSnapshot(qComments, async (snapshot) => {
@@ -148,24 +148,47 @@ export default function BlogPostDetailPage() {
       setLoadingComments(false);
     });
 
-    let unsubscribeReactions: () => void;
-    if (isAuthenticated && user?.uid) {
-      const qReactions = query(
-        collection(db, 'commentReactions'),
-        where('userId', '==', user.uid),
-        where('commentId', 'in', comments.map(c => c.id)) // Solo reacciones para comentarios visibles
-      );
-      unsubscribeReactions = onSnapshot(qReactions, (snapshot) => {
-        const reactionsMap: { [commentId: string]: 'like' | 'dislike' | 'none' } = {};
-        snapshot.docs.forEach(doc => {
-          const data = doc.data() as UserReaction;
-          reactionsMap[data.commentId] = data.type;
+    let unsubscribeReactions: () => void | undefined; // Puede ser undefined
+
+    // --- INICIO DE LA CORRECCIÓN ---
+    // Solo intentar cargar reacciones si el usuario está autenticado Y hay comentarios cargados
+    if (isAuthenticated && user?.uid && comments.length > 0) {
+      const commentIds = comments.map(c => c.id);
+      
+      // Firestore 'in' filter tiene un límite de 10 elementos.
+      // Si tienes más de 10 comentarios, necesitarías hacer múltiples consultas
+      // o cargar todas las reacciones del usuario y filtrarlas en el cliente.
+      // Para simplificar, asumiremos que no excederá el límite de 10 para 'in' para este ejemplo.
+      // Si esperas muchos comentarios, considera una colección de 'userReactions' por comentario,
+      // o un enfoque diferente para el conteo de likes/dislikes.
+      
+      // ¡Asegurarse de que el array de IDs no esté vacío antes de la consulta 'in'!
+      if (commentIds.length > 0) { 
+        const qReactions = query(
+          collection(db, 'commentReactions'),
+          where('userId', '==', user.uid),
+          where('commentId', 'in', commentIds)
+        );
+        unsubscribeReactions = onSnapshot(qReactions, (snapshot) => {
+          const reactionsMap: { [commentId: string]: 'like' | 'dislike' | 'none' } = {};
+          snapshot.docs.forEach(doc => {
+            const data = doc.data() as UserReaction;
+            reactionsMap[data.commentId] = data.type;
+          });
+          setUserReactions(reactionsMap);
+        }, (err) => {
+          console.error("Error al cargar reacciones del usuario:", err);
         });
-        setUserReactions(reactionsMap);
-      }, (err) => {
-        console.error("Error al cargar reacciones del usuario:", err);
-      });
+      } else {
+        // Si no hay commentIds, no hay reacciones que cargar, así que limpiar el estado
+        setUserReactions({});
+      }
+    } else {
+      // Si el usuario no está autenticado o no hay user.uid, limpiar las reacciones del usuario
+      setUserReactions({});
     }
+    // --- FIN DE LA CORRECCIÓN ---
+
 
     return () => {
       unsubscribeComments();
