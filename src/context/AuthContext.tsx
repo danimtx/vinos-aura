@@ -39,23 +39,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let firebaseAuth: Auth;
 
     try {
-      // Usar las variables globales de Canvas
-      const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-      const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-        apiKey: "AIzaSyDc6tTkgSRnF4mHWBQ_U_WWwRHgkOlO0GQ",
-        authDomain: "vinos-aura.firebaseapp.com",
-        projectId: "vinos-aura",
-        storageBucket: "vinos-aura.firebasestorage.app",
-        messagingSenderId: "134347867795",
-        appId: "1:134347867795:web:0dcb50158867118df12f66"
+      // Configuración directa de Firebase (sin variables globales)
+      const firebaseConfig = {
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET , // Corrige el dominio aquí
+        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
       };
 
       firebaseApp = initializeApp(firebaseConfig);
       firebaseAuth = getAuth(firebaseApp);
       setAuth(firebaseAuth);
-
-      // Manejar el token de autenticación inicial de Canvas
-      const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
       const unsubscribe = onAuthStateChanged(firebaseAuth, async (currentUser) => {
         if (currentUser) {
@@ -63,43 +59,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser({
             uid: currentUser.uid,
             email: currentUser.email,
-            name: currentUser.displayName, // Firebase puede tener displayName
+            name: currentUser.displayName,
           });
           setUserId(currentUser.uid);
         } else {
           setIsAuthenticated(false);
           setUser(null);
           setUserId(null);
-
-          // Si no hay usuario autenticado y hay un token inicial, intenta iniciar sesión con él
-          if (initialAuthToken) {
-            try {
-              await signInWithCustomToken(firebaseAuth, initialAuthToken);
-              console.log('Signed in with custom token from Canvas.');
-            } catch (error) {
-              console.error('Error signing in with custom token:', error);
-              // Si falla el token, intenta con anónimo como fallback
-              try {
-                await signInAnonymously(firebaseAuth);
-                console.log('Signed in anonymously as custom token failed or was not provided.');
-              } catch (anonError) {
-                console.error('Error signing in anonymously:', anonError);
-              }
-            }
-          } else {
-            // Si no hay token inicial, inicia sesión anónimamente por defecto
-            try {
-              await signInAnonymously(firebaseAuth);
-              console.log('Signed in anonymously as no initial token was provided.');
-            } catch (anonError) {
-              console.error('Error signing in anonymously:', anonError);
-            }
+          // Si quieres login anónimo por defecto:
+          try {
+            await signInAnonymously(firebaseAuth);
+            console.log('Signed in anonymously as no user was provided.');
+          } catch (anonError) {
+            console.error('Error signing in anonymously:', anonError);
           }
         }
-        setLoading(false); // La carga inicial ha terminado
+        setLoading(false);
       });
 
-      return () => unsubscribe(); // Limpiar el listener al desmontar
+      return () => unsubscribe();
     } catch (error) {
       console.error("Failed to initialize Firebase:", error);
       setLoading(false);
