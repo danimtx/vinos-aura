@@ -68,7 +68,7 @@ export default function Chatbot() {
       setMessages((prevMessages) => [...prevMessages, botReply]); // Añadir respuesta del bot
     } catch (error: any) {
       console.error('Error al enviar mensaje al chatbot:', error);
-      toast.error(`Error de AuraBot: ${error.message || 'No se pudo obtener respuesta.'}`, {
+      toast.error(`Error de VinaBot: ${error.message || 'No se pudo obtener respuesta.'}`, {
         style: { background: colors.crimson, color: colors.white },
         iconTheme: { primary: colors.white, secondary: colors.crimson },
       });
@@ -97,7 +97,7 @@ export default function Chatbot() {
       {isOpen && (
         <div
           className="fixed bottom-20 right-6 w-80 h-[500px] bg-white rounded-lg shadow-2xl flex flex-col z-[999] animate-slideInUp"
-          style={{ borderColor: colors.warmBeige, color: colors.darkText }}
+          style={{ borderColor: colors.warmBeige }}
         >
           {/* Encabezado del Chatbot */}
           <div className="p-4 rounded-t-lg text-white font-bold text-lg flex items-center justify-between" style={{ backgroundColor: colors.crimson }}>
@@ -110,9 +110,9 @@ export default function Chatbot() {
           {/* Área de Mensajes */}
           <div className="flex-1 p-4 overflow-y-auto custom-scrollbar" style={{ backgroundColor: colors.lightGrayBg }}>
             {messages.length === 0 && !isLoading && (
-              <div className="text-center text-gray-500 mt-10">
+              <div className="text-center text-gray-500 mt-10 px-4">
                 <SparklesIcon className="h-12 w-12 mx-auto mb-2" style={{ color: colors.golden }} />
-                <p>¡Hola! Soy VinaBot, tu asistente de Vinos Aura. ¿En qué puedo ayudarte hoy?</p>
+                <p style={{ color: colors.darkText }}>¡Hola! Soy VinaBot, tu asistente de Vinos Aura. ¿En qué puedo ayudarte hoy?</p>
               </div>
             )}
             {messages.map((msg, index) => (
@@ -126,9 +126,15 @@ export default function Chatbot() {
                 <div
                   className={`p-3 rounded-lg max-w-[80%] ${
                     msg.role === 'user'
-                      ? 'bg-crimson text-white rounded-br-none'
-                      : 'bg-warmBeige text-darkText rounded-bl-none'
+                      ? 'rounded-br-none' // Esquina inferior derecha cuadrada para mensaje de usuario
+                      : 'rounded-bl-none' // Esquina inferior izquierda cuadrada para mensaje de bot
                   }`}
+                  // Ajuste de estilos para los mensajes
+                  style={{
+                    backgroundColor: msg.role === 'user' ? colors.warmBeige : colors.white, // Fondo del mensaje
+                    color: colors.darkText, // Color del texto para ambos roles
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)', // Sutil sombra para burbujas
+                  }}
                 >
                   {msg.parts.map((part, pIdx) => (
                     <p key={pIdx}>{part.text}</p>
