@@ -28,7 +28,7 @@ export default function Footer() {
       </div>
       <div className="flex justify-center gap-4 mt-2">
         <a
-          href="https://www.instagram.com/vinosaura"
+          href="https://www.instagram.com/vinos5251aura?igsh=cXdkOXd3NXZlMThi"
           aria-label="Instagram"
           style={{ color: '#FFF' }}
           onMouseEnter={(e) => {
@@ -51,7 +51,7 @@ export default function Footer() {
           </svg>
         </a>
         <a
-          href="https://www.facebook.com/vinosaura"
+          href="https://www.facebook.com/share/1B1GQPMZLJ/?mibextid=wwXIfr"
           aria-label="Facebook"
           style={{ color: '#FFF' }}
           onMouseEnter={(e) => {
@@ -74,7 +74,7 @@ export default function Footer() {
           </svg>
         </a>
         <a
-          href="https://wa.me/1234567890"
+          href="https://wa.me/59175143673"
           aria-label="WhatsApp"
           style={{ color: '#FFF' }}
           onMouseEnter={(e) => {

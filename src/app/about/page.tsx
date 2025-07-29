@@ -12,8 +12,8 @@ export default function About() {
       alt: 'Maria Jose Vera', 
       experience: '10 años liderando proyectos de enología y viticultura, especializándose en la creación de vinos únicos.', 
       role: 'Enóloga Principal', 
-      whatsapp: 'https://wa.me/1234567890', 
-      cvLink: '#' 
+      whatsapp: 'https://wa.me/59163783487', 
+      cvLink: 'https://www.linkedin.com/in/maria-jose-vera-256352374?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app' 
     },
     { 
       name: 'MARCO DURAN', 
@@ -21,8 +21,8 @@ export default function About() {
       alt: 'Marco Duran', 
       experience: '8 años diseñando campañas de marketing que han posicionado marcas vinícolas en mercados internacionales.', 
       role: 'Director de Marketing', 
-      whatsapp: 'https://wa.me/1234567891', 
-      cvLink: '#' 
+      whatsapp: 'https://wa.me/59163796968', 
+      cvLink: 'https://www.linkedin.com/in/sebastian-duran-583a88325/' 
     },
     { 
       name: 'DANIEL MANCILLA', 
@@ -30,8 +30,8 @@ export default function About() {
       alt: 'Daniel Mancilla', 
       experience: '12 años como sommelier, guiando experiencias de cata para clientes premium en eventos globales.', 
       role: 'Sommelier y Asesor de Catas', 
-      whatsapp: 'https://wa.me/1234567892', 
-      cvLink: '#' 
+      whatsapp: 'https://wa.me/59171168130', 
+      cvLink: 'https://www.linkedin.com/in/daniel-mancilla-tejerina-126b07307?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app' 
     },
     { 
       name: 'SANTIAGO TAPIA', 
@@ -39,8 +39,8 @@ export default function About() {
       alt: 'Santiago Tapia', 
       experience: '15 años supervisando la producción de vinos, asegurando estándares de calidad excepcionales.', 
       role: 'Jefe de Producción', 
-      whatsapp: 'https://wa.me/1234567893', 
-      cvLink: '#' 
+      whatsapp: 'https://wa.me/59168690966', 
+      cvLink: 'https://www.linkedin.com/in/santiago-tapia-flores-3a1824371?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app' 
     },
     { 
       name: 'HUGO ACOSTA', 
@@ -48,7 +48,7 @@ export default function About() {
       alt: 'Hugo Acosta', 
       experience: '7 años desarrollando sistemas tecnológicos para la gestión eficiente de bodegas.', 
       role: 'Desarrollador de Sistemas', 
-      whatsapp: 'https://wa.me/1234567894', 
+      whatsapp: 'https://wa.me/59175143175', 
       cvLink: '#' 
     },
     { 
@@ -57,8 +57,8 @@ export default function About() {
       alt: 'Victor Taja', 
       experience: '9 años optimizando la logística y distribución de vinos a nivel global.', 
       role: 'Coordinador de Logística', 
-      whatsapp: 'https://wa.me/1234567895', 
-      cvLink: '#' 
+      whatsapp: 'https://wa.me/5917543673', 
+      cvLink: 'https://www.linkedin.com/in/victor-joel-taja-fern%C3%A1ndez-88232136a?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app' 
     },
   ];
 
