@@ -64,8 +64,8 @@ export default function About() {
 
   // State Management
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedMember, setSelectedMember] = useState(null);
-  const [year, setYear] = useState(2022);
+  const [selectedMember, setSelectedMember] = useState<number | null>(null);
+  const [year, setYear] = useState<number>(2022);
   const [isImageVisible, setIsImageVisible] = useState(false);
   const [hasAnimated, setHasAnimated] = useState(false);
   const [isHistoryVisible, setIsHistoryVisible] = useState(false);
@@ -81,16 +81,17 @@ export default function About() {
     setSelectedMember(null);
   };
 
-  const handleImageClick = (index) => {
+  const handleImageClick = (index: number) => {
     setSelectedMember(selectedMember === index ? null : index);
   };
 
-  const handleYearChange = (newYear) => {
+  const handleYearChange = (newYear: number) => {
     setYear(newYear);
   };
 
   // Animation for About Image and History on Scroll
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     const handleScroll = () => {
       const aboutSection = document.querySelector('section:nth-of-type(2)');
       const historySection = document.querySelector('section:nth-of-type(3)');

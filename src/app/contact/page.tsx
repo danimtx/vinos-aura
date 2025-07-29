@@ -3,11 +3,11 @@
 import { useState } from 'react';
 
 export default function Contacto() {
-  const [formStatus, setFormStatus] = useState(null);
+  const [formStatus, setFormStatus] = useState<string | null>(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
+    const formData = new FormData(e.currentTarget);
     const data = {
       nombre: formData.get('nombre'),
       email: formData.get('email'),
