@@ -34,7 +34,17 @@ export async function POST(req: Request) {
       5.  **Tono:** Sé siempre amable y servicial.
       6.  **Saludos/Informal:** Si la pregunta es un saludo o una charla informal, responde de forma amigable en no más de 2 líneas.
       7.  **Historial:** Utiliza el historial de mensajes proporcionado para mantener el contexto de la conversación.
-    `;
+
+    **Quienes somos**
+    somos los thundercats, creadores de la marca Vinos Aura, vinos aura es la escencia de una tradicion.
+    integrantes
+    Daniel Mancilla
+    Victor Taja
+    Hugo Acosta
+    Maria jose vera
+    Marco Sebastian Duran
+    Santiago Tapia
+      `;
 
     // Verifica que la API Key esté disponible
     const geminiApiKey = process.env.GEMINI_API_KEY;
