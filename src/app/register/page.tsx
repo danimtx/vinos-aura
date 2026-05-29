@@ -4,16 +4,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../context/AuthContext'; // Importa useAuth
-
-const colors = {
-  crimson: '#B31B1B',
-  warmBeige: '#D9C3A3',
-  darkGray: '#3E3E3E',
-  lightGrayBg: '#F5F5F5',
-  white: '#FFFFFF',
-  darkText: '#3E3E3E',
-};
+import { useAuth } from '../../context/AuthContext';
+import { motion } from 'framer-motion';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -22,9 +14,9 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
-  const [loading, setLoading] = useState(false); // Estado de carga
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { register } = useAuth(); // Obtiene la función register del contexto
+  const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,104 +35,129 @@ export default function RegisterPage() {
     setLoading(false);
 
     if (success) {
-      setMessage('Cuenta creada con éxito. ¡Ya puedes iniciar sesión!');
+      setMessage('Cuenta creada con éxito. Redirigiendo...');
       setMessageType('success');
-      // Opcional: Redirigir al login después de un registro exitoso
       setTimeout(() => {
         router.push('/login');
       }, 2000);
     } else {
-      setMessage('Error al crear la cuenta. Inténtalo de nuevo.'); // Mensaje de error genérico
+      setMessage('Error al crear la cuenta. Inténtalo de nuevo.');
       setMessageType('error');
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen py-12" style={{ backgroundColor: colors.lightGrayBg }}>
-      <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md" style={{ color: colors.darkText }}>
-        <h2 className="text-3xl font-bold text-center mb-8" style={{ color: colors.crimson }}>Crear Cuenta</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              Nombre Completo
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-crimson focus:border-crimson sm:text-sm"
-              style={{ borderColor: colors.warmBeige }}
-              required
-            />
+    <div className="bg-background min-h-screen flex items-center justify-center pt-24 pb-12 px-4 sm:px-6 lg:px-8 relative z-10">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="max-w-md w-full space-y-8 bg-[#111] border border-white/5 p-10 rounded-sm shadow-2xl relative overflow-hidden"
+      >
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
+        
+        <div>
+          <span className="text-primary tracking-[0.3em] uppercase text-xs font-sans block mb-2 text-center">
+            Únete a Vinos Aura
+          </span>
+          <h2 className="text-center text-4xl font-serif font-light text-[#F5F5F0]">
+            Crear <span className="italic text-primary">Cuenta</span>
+          </h2>
+        </div>
+        
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4 rounded-md shadow-sm">
+            <div>
+              <label htmlFor="name" className="block text-xs font-sans tracking-widest uppercase text-muted mb-2">
+                Nombre Completo
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                className="appearance-none relative block w-full px-4 py-3 border border-white/10 bg-[#151515] text-[#F5F5F0] rounded-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary focus:z-10 sm:text-sm font-sans font-light transition-colors"
+                placeholder="Tu nombre"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="email" className="block text-xs font-sans tracking-widest uppercase text-muted mb-2">
+                Correo Electrónico
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="appearance-none relative block w-full px-4 py-3 border border-white/10 bg-[#151515] text-[#F5F5F0] rounded-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary focus:z-10 sm:text-sm font-sans font-light transition-colors"
+                placeholder="tu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-xs font-sans tracking-widest uppercase text-muted mb-2">
+                Contraseña
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                className="appearance-none relative block w-full px-4 py-3 border border-white/10 bg-[#151515] text-[#F5F5F0] rounded-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary focus:z-10 sm:text-sm font-sans font-light transition-colors"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="confirmPassword" className="block text-xs font-sans tracking-widest uppercase text-muted mb-2">
+                Confirmar Contraseña
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                required
+                className="appearance-none relative block w-full px-4 py-3 border border-white/10 bg-[#151515] text-[#F5F5F0] rounded-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary focus:z-10 sm:text-sm font-sans font-light transition-colors"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
           </div>
-          <div className="mb-4">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Correo Electrónico
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-crimson focus:border-crimson sm:text-sm"
-              style={{ borderColor: colors.warmBeige }}
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Contraseña
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-crimson focus:border-crimson sm:text-sm"
-              style={{ borderColor: colors.warmBeige }}
-              required
-            />
-          </div>
-          <div className="mb-6">
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-              Confirmar Contraseña
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-crimson focus:border-crimson sm:text-sm"
-              style={{ borderColor: colors.warmBeige }}
-              required
-            />
-          </div>
+
           {message && (
-            <p className={`text-sm mb-4 ${messageType === 'error' ? 'text-red-500' : 'text-green-600'}`}>
+            <div className={`text-sm font-sans font-light text-center border py-2 rounded-sm ${messageType === 'error' ? 'text-accent border-accent/20 bg-accent/5' : 'text-[#D9C3A3] border-[#D9C3A3]/20 bg-[#D9C3A3]/5'}`}>
               {message}
-            </p>
+            </div>
           )}
-          <button
-            type="submit"
-            className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white transition-all duration-300 ease-in-out"
-            style={{ backgroundColor: colors.crimson }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#8B1313')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.crimson)}
-            disabled={loading}
-          >
-            {loading ? 'Registrando...' : 'Registrarse'}
-          </button>
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-xs tracking-widest uppercase font-bold rounded-sm text-white bg-accent hover:bg-[#8B1313] focus:outline-none transition-all duration-300 disabled:opacity-50"
+            >
+              {loading ? 'Registrando...' : 'Registrarse'}
+            </button>
+          </div>
         </form>
-        <p className="mt-6 text-center text-sm">
-          ¿Ya tienes una cuenta?{' '}
-          <Link href="/login" passHref>
-            <span className="font-medium hover:underline cursor-pointer" style={{ color: colors.crimson }}>
+        
+        <div className="text-center border-t border-white/5 pt-6 mt-6">
+          <p className="font-sans font-light text-sm text-muted">
+            ¿Ya tienes una cuenta?{' '}
+            <Link href="/login" className="font-medium text-primary hover:text-[#f5f5f0] transition-colors border-b border-primary/30 hover:border-[#f5f5f0]">
               Inicia sesión aquí
-            </span>
-          </Link>
-        </p>
-      </div>
+            </Link>
+          </p>
+        </div>
+      </motion.div>
     </div>
   );
 }

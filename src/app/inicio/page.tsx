@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 
 const imagenesFondo = [
   '/fondo/fondo.jpg',
@@ -12,104 +13,128 @@ const imagenesFondo = [
 ];
 
 export default function Inicio() {
-  const [indice, setIndice] = useState(1);
-  const [imagenAnterior, setImagenAnterior] = useState(imagenesFondo[0]);
-  const [cambiando, setCambiando] = useState(false);
-  const primeraTransicion = useRef(true);
+  const [indice, setIndice] = useState(0);
 
   useEffect(() => {
     const intervalo = setInterval(() => {
-      setCambiando(true);
-
-      setTimeout(() => {
-        setImagenAnterior(imagenesFondo[indice]);
-        setIndice((prev) => (prev + 1) % imagenesFondo.length);
-        setCambiando(false);
-        primeraTransicion.current = false;
-      }, 2500);
-    }, 5000);
-
+      setIndice((prev) => (prev + 1) % imagenesFondo.length);
+    }, 6000);
     return () => clearInterval(intervalo);
-  }, [indice]);
+  }, []);
 
   return (
-    <div className="font-['EB_Garamond'] bg-[#F5F5F5]" style={{ color: '#3E3E3E' }}>
-      <section className="relative h-screen w-full overflow-hidden">
-        {/* Imagen anterior */}
-        <motion.div
-          key={`anterior-${imagenAnterior}`}
-          className="absolute inset-0 w-full h-full z-0"
-          initial={{ opacity: 1, scale: 1 }}
-          animate={cambiando ? { opacity: 0, scale: 0.9 } : { opacity: 1, scale: 1 }}
-          transition={{ duration: 2.5, ease: 'easeInOut' }}
-        >
-          <Image
-            src={imagenAnterior}
-            alt="Imagen anterior"
-            fill
-            className="object-cover"
-            priority
-          />
-        </motion.div>
-
-        {/* Imagen nueva */}
-        <motion.div
-          key={`nueva-${imagenesFondo[indice]}`}
-          className="absolute inset-0 w-full h-full z-10"
-          initial={{ opacity: 0, scale: 1.2 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{
-            duration: 2.5,
-            ease: 'easeInOut',
-            delay: primeraTransicion.current ? 0 : 2.5,
-          }}
-        >
-          <Image
-            src={imagenesFondo[indice]}
-            alt="Imagen nueva"
-            fill
-            className="object-cover"
-            priority
-          />
-        </motion.div>
-
-        {/* Contenido */}
-        <div className="relative z-20 flex items-center justify-center h-full">
+    <div className="bg-background text-foreground min-h-screen">
+      {/* Sección Hero Inmersiva */}
+      <section className="relative h-screen w-full overflow-hidden flex items-center justify-center">
+        {/* Carrusel de Fondo con fundido elegante y zoom lento (Parallax feel) */}
+        <AnimatePresence mode="popLayout">
           <motion.div
-            className="text-center p-8 max-w-4xl"
-            initial={{ scale: 0.6, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
+            key={indice}
+            className="absolute inset-0 w-full h-full z-0"
+            initial={{ opacity: 0, scale: 1.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 2.5, ease: 'easeInOut' }}
           >
-            <h1
-              className="text-7xl font-bold mb-4 uppercase"
-              style={{
-                color: '#B31B1B',
-                textShadow: '3px 3px 6px rgba(0, 0, 0, 0.5)',
-              }}
-            >
-              VINOS AURA
-            </h1>
-            <p
-              className="text-2xl mb-6 text-white leading-relaxed font-semibold"
-              style={{
-                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.4)',
-                background: 'rgba(0, 0, 0, 0.3)',
-                padding: '10px 20px',
-                borderRadius: '8px',
-              }}
-            >
-              Descubre la pasión detrás de cada botella. Explora nuestros vinos excepcionales y sumérgete en la experiencia única de VINOS AURA.
-            </p>
-            <a
+            <Image
+              src={imagenesFondo[indice]}
+              alt={`Vinos Aura Fondo ${indice + 1}`}
+              fill
+              className="object-cover"
+              priority
+            />
+            {/* Overlay Oscuro para asegurar contraste de tipografía */}
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-[#080808]/70 to-[#080808]/40" />
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Contenido Central */}
+        <div className="relative z-20 flex flex-col items-center justify-center text-center px-4 max-w-5xl mt-20">
+          
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
+            className="text-primary tracking-[0.3em] uppercase text-sm font-sans mb-6"
+          >
+            El Arte en cada botella
+          </motion.span>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.2, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="font-serif text-6xl md:text-8xl lg:text-[9rem] font-light leading-none mb-8 text-[#F5F5F0]"
+            style={{ textShadow: '0 10px 30px rgba(0,0,0,0.8)' }}
+          >
+            <span className="italic font-light">Vinos</span> Aura
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.5, delay: 1.2 }}
+            className="text-muted text-lg md:text-xl font-sans max-w-2xl font-light mb-12"
+          >
+            Descubre la pasión detrás de cada botella. Una experiencia enológica diseñada para despertar los sentidos y redefinir la tradición.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 1.5 }}
+          >
+            <Link 
               href="/vinos"
-              className="inline-block px-6 py-3 rounded-md font-bold"
-              style={{ backgroundColor: '#B31B1B', color: '#FFF', textDecoration: 'none' }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#8B1313')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#B31B1B')}
+              className="group relative inline-flex items-center justify-center px-8 py-4 bg-transparent text-primary font-sans tracking-widest uppercase text-sm overflow-hidden border border-primary/30 hover:border-primary transition-colors duration-500"
             >
-              Explora Nuestros Vinos
-            </a>
+              <span className="absolute inset-0 w-full h-full bg-primary/10 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-500 ease-in-out"></span>
+              <span className="relative z-10 flex items-center gap-2">
+                Explorar Catálogo
+                <span className="group-hover:translate-x-2 transition-transform duration-300">→</span>
+              </span>
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Sección Secundaria Breve para incentivar scroll */}
+      <section className="py-32 px-6 md:px-16 lg:px-32 bg-background relative z-10">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+          <motion.div 
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
+          >
+            <h2 className="font-serif text-5xl md:text-6xl mb-6 text-foreground">
+              Nuestra <span className="text-primary italic">Esencia</span>
+            </h2>
+            <p className="font-sans text-muted text-lg leading-relaxed mb-8 font-light">
+              Cultivamos historias en cada viñedo. Vinos Aura nace de la obsesión por el detalle, 
+              respetando los ciclos de la tierra y aplicando técnicas vanguardistas para ofrecer 
+              caldos con una personalidad innegable y una textura sedosa que perdura en la memoria.
+            </p>
+            <Link href="/about" className="text-foreground hover:text-primary border-b border-primary/30 hover:border-primary pb-1 transition-colors font-sans uppercase tracking-widest text-xs">
+              Conoce nuestra historia
+            </Link>
+          </motion.div>
+
+          {/* Placeholder para una botella o imagen artística */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="w-full aspect-video md:aspect-[16/9] relative bg-[#111] overflow-hidden group shadow-2xl"
+          >
+            <Image 
+              src={imagenesFondo[2] || "/fondo/fondo.jpg"} 
+              alt="Esencia Vinos Aura"
+              fill
+              className="object-cover opacity-60 group-hover:opacity-80 transition-all duration-1000 ease-in-out group-hover:scale-105"
+            />
+            <div className="absolute inset-0 border border-primary/20 m-4 z-10 pointer-events-none transition-all duration-700 group-hover:m-2"></div>
           </motion.div>
         </div>
       </section>

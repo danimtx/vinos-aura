@@ -6,50 +6,44 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
-import { useAuth } from '@/context/AuthContext'; // Importar useAuth para saber si el usuario está autenticado
-import toast from 'react-hot-toast'; // Para notificaciones
-import { PlusIcon } from '@heroicons/react/24/outline'; // Icono para el botón de nueva publicación
+import { useAuth } from '@/context/AuthContext';
+import toast from 'react-hot-toast';
+import { PlusIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 
-// Definición de la interfaz para una publicación de blog
 interface BlogPost {
   id: string;
   title: string;
-  content: string; // Contenido completo o un resumen
+  content: string;
   img: string;
   alt: string;
-  createdAt: any; // Firebase Timestamp
+  createdAt: any;
   authorId: string;
   authorName: string;
 }
 
-const colors = {
-  crimson: '#B31B1B',
-  warmBeige: '#D9C3A3',
-  darkGray: '#3E3E3E',
-  lightGrayBg: '#F5F5F5',
-  white: '#FFFFFF',
-  darkText: '#3E3E3E',
-  golden: '#C5A55B',
-};
-
 export default function Blog() {
-  const { user, isAuthenticated, loading: authLoading } = useAuth(); // Obtener estado de autenticación
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [postsError, setPostsError] = useState<string | null>(null);
 
-  // Estados para el formulario de nueva publicación
   const [showNewPostForm, setShowNewPostForm] = useState(false);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
-  const [newPostImg, setNewPostImg] = useState(''); // Para la URL de la imagen
+  const [newPostImg, setNewPostImg] = useState('');
   const [newPostAlt, setNewPostAlt] = useState('');
   const [isSubmittingPost, setIsSubmittingPost] = useState(false);
 
-  // Cargar publicaciones del blog en tiempo real
   useEffect(() => {
     setLoadingPosts(true);
     setPostsError(null);
+
+    if (!db) {
+      setPostsError("Configuración de base de datos faltante.");
+      setLoadingPosts(false);
+      return;
+    }
 
     const q = query(collection(db, 'blogPosts'), orderBy('createdAt', 'desc'));
 
@@ -60,14 +54,13 @@ export default function Blog() {
       }));
       setBlogPosts(postsData);
       setLoadingPosts(false);
-      console.log("Publicaciones de blog cargadas:", postsData);
     }, (err) => {
       console.error("Error al cargar las publicaciones del blog:", err);
-      setPostsError("Error al cargar las publicaciones. Por favor, inténtalo de nuevo más tarde.");
+      setPostsError("Error al cargar las publicaciones.");
       setLoadingPosts(false);
     });
 
-    return () => unsubscribe(); // Limpiar el listener al desmontar
+    return () => unsubscribe();
   }, []);
 
   const handleNewPostSubmit = async (e: React.FormEvent) => {
@@ -77,16 +70,17 @@ export default function Blog() {
       return;
     }
     if (!newPostTitle.trim() || !newPostContent.trim()) {
-      toast.error("El título y el contenido de la publicación no pueden estar vacíos.");
+      toast.error("El título y el contenido no pueden estar vacíos.");
       return;
     }
 
     setIsSubmittingPost(true);
     try {
+      if (!db) throw new Error("Base de datos no inicializada.");
       const postData: Omit<BlogPost, 'id'> = {
         title: newPostTitle.trim(),
         content: newPostContent.trim(),
-        img: newPostImg.trim() || '/placeholder-blog.jpg', // Usar placeholder si no se proporciona imagen
+        img: newPostImg.trim() || '/placeholder-blog.jpg',
         alt: newPostAlt.trim() || newPostTitle.trim(),
         createdAt: serverTimestamp(),
         authorId: user.uid,
@@ -95,181 +89,194 @@ export default function Blog() {
 
       await addDoc(collection(db, 'blogPosts'), postData);
       toast.success('Publicación creada con éxito!');
-      // Resetear formulario
       setNewPostTitle('');
       setNewPostContent('');
       setNewPostImg('');
       setNewPostAlt('');
-      setShowNewPostForm(false); // Ocultar formulario después de enviar
+      setShowNewPostForm(false);
     } catch (err) {
       console.error("Error al crear la publicación:", err);
-      toast.error("Error al crear la publicación. Inténtalo de nuevo.");
+      toast.error("Error al crear la publicación.");
     } finally {
       setIsSubmittingPost(false);
     }
   };
 
   return (
-    <div className="font-['EB_Garamond']" style={{ backgroundColor: colors.lightGrayBg, color: colors.darkText }}>
-      <section className="py-16 px-4 sm:px-6 lg:px-8 text-center bg-white">
-        <h2
-          className="text-4xl font-bold mb-8 uppercase"
-          style={{ color: colors.crimson }}
+    <div className="bg-background text-foreground min-h-screen pt-32 pb-24 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-16"
         >
-          BLOG DE VINOS AURA
-        </h2>
+          <span className="text-primary tracking-[0.3em] uppercase text-xs font-sans block mb-4">
+            Historias y Saberes
+          </span>
+          <h1 className="text-5xl md:text-6xl font-serif font-light text-[#F5F5F0]">
+            El Diario de <span className="italic text-primary">Aura</span>
+          </h1>
+        </motion.div>
 
-        {/* Botón para abrir el formulario de nueva publicación (solo para usuarios autenticados) */}
+        {/* Botón Nueva Publicación */}
         {isAuthenticated && (
-          <div className="mb-8 text-right">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-12 flex justify-end"
+          >
             <button
               onClick={() => setShowNewPostForm(!showNewPostForm)}
-              className="px-6 py-3 rounded-md font-bold text-white transition-all duration-300 ease-in-out flex items-center justify-center ml-auto"
-              style={{ backgroundColor: colors.crimson }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#8B1313')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.crimson)}
+              className="px-6 py-3 bg-transparent border border-white/20 hover:border-primary text-foreground hover:text-primary tracking-widest uppercase text-xs transition-all duration-300 rounded-sm flex items-center"
             >
-              <PlusIcon className="h-5 w-5 mr-2" />
-              {showNewPostForm ? 'Ocultar Formulario' : 'Crear Nueva Publicación'}
+              <PlusIcon className="h-4 w-4 mr-2" />
+              {showNewPostForm ? 'Cancelar' : 'Escribir Artículo'}
             </button>
-          </div>
+          </motion.div>
         )}
 
-        {/* Formulario de Nueva Publicación (condicional) */}
+        {/* Formulario Nueva Publicación */}
         {isAuthenticated && showNewPostForm && (
-          <div className="max-w-3xl mx-auto mb-12 p-8 rounded-lg shadow-xl" style={{ backgroundColor: colors.warmBeige }}>
-            <h3 className="text-2xl font-bold mb-6" style={{ color: colors.darkText }}>Crear Nueva Publicación</h3>
-            <form onSubmit={handleNewPostSubmit} className="space-y-4 text-left">
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mb-16 bg-[#111] border border-white/5 p-8 rounded-sm overflow-hidden"
+          >
+            <h3 className="text-2xl font-serif text-[#F5F5F0] mb-6">Nuevo Artículo</h3>
+            <form onSubmit={handleNewPostSubmit} className="space-y-6">
               <div>
-                <label htmlFor="postTitle" className="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                <label htmlFor="postTitle" className="block text-xs font-sans tracking-widest uppercase text-muted mb-2">Título</label>
                 <input
                   type="text"
                   id="postTitle"
                   value={newPostTitle}
                   onChange={(e) => setNewPostTitle(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-crimson"
-                  style={{ borderColor: colors.darkGray, backgroundColor: colors.white, color: colors.darkText }}
+                  className="w-full px-4 py-3 bg-[#151515] border border-white/10 text-[#F5F5F0] rounded-sm focus:outline-none focus:border-primary transition-colors font-sans"
                   required
                 />
               </div>
               <div>
-                <label htmlFor="postContent" className="block text-sm font-medium text-gray-700 mb-1">Contenido</label>
+                <label htmlFor="postContent" className="block text-xs font-sans tracking-widest uppercase text-muted mb-2">Contenido</label>
                 <textarea
                   id="postContent"
                   value={newPostContent}
                   onChange={(e) => setNewPostContent(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-crimson"
-                  rows={6}
-                  style={{ borderColor: colors.darkGray, backgroundColor: colors.white, color: colors.darkText }}
+                  className="w-full px-4 py-3 bg-[#151515] border border-white/10 text-[#F5F5F0] rounded-sm focus:outline-none focus:border-primary transition-colors font-sans"
+                  rows={8}
                   required
                 ></textarea>
               </div>
-              <div>
-                <label htmlFor="postImg" className="block text-sm font-medium text-gray-700 mb-1">URL de Imagen (Opcional)</label>
-                <input
-                  type="text"
-                  id="postImg"
-                  value={newPostImg}
-                  onChange={(e) => setNewPostImg(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-crimson"
-                  placeholder="Ej: /img/mi-nueva-imagen.jpg"
-                  style={{ borderColor: colors.darkGray, backgroundColor: colors.white, color: colors.darkText }}
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="postImg" className="block text-xs font-sans tracking-widest uppercase text-muted mb-2">URL de Imagen (Opcional)</label>
+                  <input
+                    type="text"
+                    id="postImg"
+                    value={newPostImg}
+                    onChange={(e) => setNewPostImg(e.target.value)}
+                    className="w-full px-4 py-3 bg-[#151515] border border-white/10 text-[#F5F5F0] rounded-sm focus:outline-none focus:border-primary transition-colors font-sans"
+                    placeholder="/img/ejemplo.jpg"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="postAlt" className="block text-xs font-sans tracking-widest uppercase text-muted mb-2">Texto Alternativo (Opcional)</label>
+                  <input
+                    type="text"
+                    id="postAlt"
+                    value={newPostAlt}
+                    onChange={(e) => setNewPostAlt(e.target.value)}
+                    className="w-full px-4 py-3 bg-[#151515] border border-white/10 text-[#F5F5F0] rounded-sm focus:outline-none focus:border-primary transition-colors font-sans"
+                  />
+                </div>
               </div>
-              <div>
-                <label htmlFor="postAlt" className="block text-sm font-medium text-gray-700 mb-1">Texto Alternativo de Imagen (Opcional)</label>
-                <input
-                  type="text"
-                  id="postAlt"
-                  value={newPostAlt}
-                  onChange={(e) => setNewPostAlt(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-crimson"
-                  placeholder="Ej: Descripción de la imagen"
-                  style={{ borderColor: colors.darkGray, backgroundColor: colors.white, color: colors.darkText }}
-                />
-              </div>
-              <div className="text-right">
+              <div className="text-right pt-4">
                 <button
                   type="submit"
-                  className="px-8 py-3 rounded-md font-bold text-white transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: colors.crimson }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#8B1313')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.crimson)}
                   disabled={isSubmittingPost}
+                  className="px-8 py-3 bg-accent hover:bg-[#8B1313] text-white tracking-widest uppercase text-xs font-bold transition-all duration-300 rounded-sm disabled:opacity-50"
                 >
-                  {isSubmittingPost ? 'Publicando...' : 'Publicar'}
+                  {isSubmittingPost ? 'Publicando...' : 'Publicar Artículo'}
                 </button>
               </div>
             </form>
-          </div>
+          </motion.div>
         )}
 
-        {/* Lista de Publicaciones */}
+        {/* Lista de Posts */}
         {loadingPosts ? (
-          <div className="text-center py-10">
-            <p className="text-xl font-medium" style={{ color: colors.darkText }}>Cargando publicaciones...</p>
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mt-4" style={{ borderColor: colors.crimson }}></div>
+          <div className="flex flex-col items-center justify-center py-20 opacity-70">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-primary border-r-2 border-r-transparent mb-4"></div>
+            <p className="font-sans font-light tracking-widest uppercase text-xs text-muted">Buscando historias...</p>
           </div>
         ) : postsError ? (
-          <div className="text-center py-10">
-            <p className="text-xl font-medium text-red-600">{postsError}</p>
+          <div className="text-center py-20 bg-[#111] border border-white/5 rounded-sm">
+            <p className="font-serif text-accent text-xl">{postsError}</p>
           </div>
         ) : blogPosts.length === 0 ? (
-          <div className="text-center py-10">
-            <p className="text-xl font-medium" style={{ color: colors.darkText }}>No hay publicaciones en el blog en este momento. ¡Sé el primero en crear una!</p>
+          <div className="text-center py-20 bg-[#111] border border-white/5 rounded-sm">
+            <p className="font-sans font-light text-muted text-lg mb-4">Aún no hay historias escritas.</p>
+            <p className="font-sans font-light text-muted text-sm italic">Las mejores cosechas toman tiempo.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-7xl mx-auto">
-            {blogPosts.map((post) => (
-              <div
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {blogPosts.map((post, index) => (
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
                 key={post.id}
-                className="p-8 rounded-md text-left shadow-md hover:shadow-xl transition-all duration-300 ease-in-out"
-                style={{ backgroundColor: colors.warmBeige }}
+                className="group bg-[#111] border border-white/5 rounded-sm overflow-hidden flex flex-col hover:border-primary/30 transition-all duration-500"
               >
-                <div className="relative w-full h-60 bg-gray-100 flex items-center justify-center overflow-hidden rounded-md mb-4">
+                <div className="relative h-64 w-full overflow-hidden bg-[#0a0a0a]">
                   <Image
                     src={post.img || '/placeholder-blog.jpg'}
                     alt={post.alt || post.title}
                     fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    className="object-cover rounded-md"
-                    priority
+                    className="object-cover transition-transform duration-1000 ease-in-out group-hover:scale-110 opacity-80 group-hover:opacity-100"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = '/placeholder-blog.jpg';
                     }}
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-transparent to-transparent"></div>
                 </div>
-                <h3
-                  className="text-2xl font-bold mb-2 uppercase"
-                  style={{ color: colors.crimson }}
-                >
-                  {post.title}
-                </h3>
-                <p
-                  className="text-sm mb-4"
-                  style={{ color: colors.darkGray }}
-                >
-                  Por <span className="font-semibold">{post.authorName}</span> el {post.createdAt?.toDate().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
-                </p>
-                <p
-                  className="text-base leading-relaxed mb-4 text-gray-700"
-                  dangerouslySetInnerHTML={{ __html: post.content.substring(0, 150) + (post.content.length > 150 ? '...' : '') }} // Mostrar un resumen
-                />
-                <Link href={`/blog/${post.id}`} passHref>
-                  <button
-                    className="font-bold text-white px-4 py-2 rounded-md transition-all duration-300 ease-in-out"
-                    style={{ backgroundColor: colors.crimson }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#8B1313')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.crimson)}
-                  >
-                    Leer más
-                  </button>
-                </Link>
-              </div>
+                
+                <div className="p-8 flex flex-col flex-grow relative">
+                  <div className="absolute top-0 right-8 -mt-6">
+                    <div className="w-12 h-1 bg-primary"></div>
+                  </div>
+                  
+                  <h3 className="text-2xl font-serif text-[#F5F5F0] mb-4 leading-tight group-hover:text-primary transition-colors">
+                    {post.title}
+                  </h3>
+                  
+                  <div className="flex items-center gap-2 mb-6">
+                    <span className="text-xs font-sans tracking-widest uppercase text-muted">
+                      Por {post.authorName}
+                    </span>
+                    <span className="w-1 h-1 rounded-full bg-primary/50"></span>
+                    <span className="text-xs font-sans tracking-widest uppercase text-muted">
+                      {post.createdAt?.toDate().toLocaleDateString('es-ES', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  </div>
+                  
+                  <p 
+                    className="font-sans font-light text-muted text-sm leading-relaxed mb-8 flex-grow"
+                    dangerouslySetInnerHTML={{ __html: post.content.substring(0, 120) + (post.content.length > 120 ? '...' : '') }}
+                  />
+                  
+                  <Link href={`/blog/${post.id}`} className="mt-auto inline-block">
+                    <span className="text-xs font-sans tracking-widest uppercase text-primary border-b border-primary/30 pb-1 group-hover:border-primary transition-colors">
+                      Leer Artículo Completo
+                    </span>
+                  </Link>
+                </div>
+              </motion.div>
             ))}
           </div>
         )}
-      </section>
+      </div>
     </div>
   );
 }

@@ -5,149 +5,155 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '../../context/CartContext';
 import { PlusIcon, MinusIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { useAuth } from '../../context/AuthContext'; // Importa el contexto de autenticación
-
-const colors = {
-  crimson: '#B31B1B',
-  warmBeige: '#D9C3A3',
-  darkGray: '#3E3E3E',
-  lightGrayBg: '#F5F5F5',
-  white: '#FFFFFF',
-  darkText: '#3E3E3E',
-};
+import { useAuth } from '../../context/AuthContext';
+import { motion } from 'framer-motion';
 
 export default function CartPage() {
   const { cart, total, increaseQuantity, decreaseQuantity, removeFromCart } = useCart();
-  const { isAuthenticated } = useAuth(); // Usamos isAuthenticated para el botón de compra
+  const { isAuthenticated } = useAuth();
 
   return (
-    <div className="font-['EB_Garamond'] py-16 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: colors.lightGrayBg, color: colors.darkText }}>
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-xl p-8">
-        <h1 className="text-4xl font-bold mb-8 text-center" style={{ color: colors.crimson }}>
-          Mi Carrito de Compras
-        </h1>
+    <div className="bg-background text-foreground min-h-screen pt-32 pb-24 relative z-10">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-16"
+        >
+          <span className="text-primary tracking-[0.3em] uppercase text-xs font-sans block mb-4">
+            Tu Selección
+          </span>
+          <h1 className="text-5xl md:text-6xl font-serif font-light text-[#F5F5F0]">
+            Bodega <span className="italic text-primary">Personal</span>
+          </h1>
+        </motion.div>
 
         {cart.length === 0 ? (
-          <div className="text-center py-10">
-            <p className="text-lg mb-4">Tu carrito está vacío.</p>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-20 bg-[#111] border border-white/5 rounded-sm"
+          >
+            <p className="font-sans font-light text-muted text-lg mb-8">Tu bodega está vacía en este momento.</p>
             <Link href="/vinos" passHref>
-              <button
-                className="px-8 py-3 rounded-md font-bold text-white transition-all duration-300 ease-in-out"
-                style={{ backgroundColor: colors.crimson }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#8B1313')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.crimson)}
-              >
-                Explorar Vinos
+              <button className="px-8 py-4 rounded-sm font-sans tracking-widest uppercase text-xs text-white bg-accent hover:bg-[#8B1313] transition-colors duration-300">
+                Explorar la Colección
               </button>
             </Link>
-          </div>
+          </motion.div>
         ) : (
-          <div>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
             {/* Encabezados de la tabla */}
-            <div className="hidden md:grid grid-cols-5 gap-4 py-3 border-b-2 font-bold uppercase" style={{ borderColor: colors.warmBeige, color: colors.darkGray }}>
-              <div className="col-span-2">Producto</div>
-              <div className="text-center">Precio</div>
+            <div className="hidden md:grid grid-cols-5 gap-4 pb-4 border-b border-white/10 font-sans text-xs uppercase tracking-widest text-muted">
+              <div className="col-span-2">Cosecha</div>
+              <div className="text-center">Valor</div>
               <div className="text-center">Cantidad</div>
-              <div className="text-right">Total</div>
+              <div className="text-right">Subtotal</div>
             </div>
 
             {/* Ítems del carrito */}
-            {cart.map((item) => (
-              <div key={item.id} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-center py-4 border-b border-gray-200">
-                {/* Producto Info */}
-                <div className="col-span-2 flex items-center">
-                  {item.img && (
-                    <Image
-                      src={item.img}
-                      alt={item.name}
-                      width={80}
-                      height={120}
-                      className="object-contain mr-4 rounded-md"
-                    />
-                  )}
-                  <div>
-                    <h3 className="text-lg font-semibold" style={{ color: colors.darkText }}>{item.name}</h3>
+            <div className="space-y-6 md:space-y-0 mt-6 md:mt-0">
+              {cart.map((item, index) => (
+                <motion.div 
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 * index }}
+                  key={item.id} 
+                  className="grid grid-cols-1 md:grid-cols-5 gap-6 md:gap-4 items-center py-6 border-b border-white/5 bg-[#111] md:bg-transparent p-4 md:p-0 rounded-sm md:rounded-none"
+                >
+                  {/* Producto Info */}
+                  <div className="col-span-2 flex items-center">
+                    <div className="w-20 h-24 relative bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] border border-white/5 rounded-sm p-2 flex-shrink-0 mr-6">
+                      <Image
+                        src={item.img || '/placeholder-wine.png'}
+                        alt={item.name}
+                        fill
+                        className="object-contain p-2"
+                        onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder-wine.png'; }}
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-serif text-[#F5F5F0] mb-1">{item.name}</h3>
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        className="text-xs font-sans text-muted hover:text-accent transition-colors flex items-center gap-1 uppercase tracking-widest mt-2"
+                      >
+                        <TrashIcon className="h-3 w-3" /> Retirar
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Precio Unitario */}
+                  <div className="text-center font-sans font-light text-muted md:block flex justify-between">
+                    <span className="md:hidden uppercase text-xs tracking-widest">Valor:</span>
+                    ${item.price.toFixed(2)}
+                  </div>
+
+                  {/* Control de Cantidad */}
+                  <div className="flex items-center justify-center space-x-4">
                     <button
-                      onClick={() => removeFromCart(item.id)}
-                      className="text-sm text-red-500 hover:text-red-700 mt-1 flex items-center gap-1"
+                      onClick={() => decreaseQuantity(item.id)}
+                      className="p-1 rounded-full border border-white/10 hover:border-primary hover:text-primary text-muted transition-colors"
                     >
-                      <TrashIcon className="h-4 w-4" /> Eliminar
+                      <MinusIcon className="h-4 w-4" />
+                    </button>
+                    <span className="text-lg font-serif text-[#F5F5F0] w-6 text-center">{item.quantity}</span>
+                    <button
+                      onClick={() => increaseQuantity(item.id)}
+                      className="p-1 rounded-full border border-white/10 hover:border-primary hover:text-primary text-muted transition-colors"
+                    >
+                      <PlusIcon className="h-4 w-4" />
                     </button>
                   </div>
-                </div>
 
-                {/* Precio Unitario */}
-                <div className="text-center font-medium" style={{ color: colors.darkText }}>
-                  ${item.price.toFixed(2)}
-                </div>
-
-                {/* Control de Cantidad */}
-                <div className="flex items-center justify-center space-x-2">
-                  <button
-                    onClick={() => decreaseQuantity(item.id)}
-                    className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-                  >
-                    <MinusIcon className="h-5 w-5" />
-                  </button>
-                  <span className="text-lg font-medium w-8 text-center" style={{ color: colors.darkText }}>{item.quantity}</span>
-                  <button
-                    onClick={() => increaseQuantity(item.id)}
-                    className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-                  >
-                    <PlusIcon className="h-5 w-5" />
-                  </button>
-                </div>
-
-                {/* Total por Producto */}
-                <div className="text-right font-bold text-lg" style={{ color: colors.crimson }}>
-                  ${(item.price * item.quantity).toFixed(2)}
-                </div>
-              </div>
-            ))}
+                  {/* Total por Producto */}
+                  <div className="text-right font-serif text-xl text-primary md:block flex justify-between">
+                    <span className="md:hidden font-sans uppercase text-xs tracking-widest text-muted">Subtotal:</span>
+                    ${(item.price * item.quantity).toFixed(2)}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
 
             {/* Resumen del Total */}
-            <div className="mt-8 pt-4 border-t-2 border-dashed flex justify-between items-center" style={{ borderColor: colors.warmBeige }}>
-              <h2 className="text-2xl font-bold" style={{ color: colors.darkText }}>Total:</h2>
-              <span className="text-3xl font-extrabold" style={{ color: colors.crimson }}>${total.toFixed(2)}</span>
+            <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6">
+              <div className="flex gap-4">
+                <Link href="/vinos" passHref>
+                  <button className="text-xs font-sans tracking-widest uppercase text-muted hover:text-primary transition-colors border-b border-transparent hover:border-primary pb-1">
+                    Continuar Explorando
+                  </button>
+                </Link>
+              </div>
+              <div className="flex items-end gap-6">
+                <span className="text-sm font-sans tracking-widest uppercase text-muted mb-1">Inversión Total:</span>
+                <span className="text-4xl font-serif italic text-primary">${total.toFixed(2)}</span>
+              </div>
             </div>
 
             {/* Botón de Comprar */}
-            <div className="mt-8 text-center">
+            <div className="mt-12 flex justify-end">
               {isAuthenticated ? (
-                <Link href="/checkout" passHref> {/* Asumiendo una página de checkout */}
-                  <button
-                    className="px-10 py-4 rounded-md font-bold text-white text-xl transition-all duration-300 ease-in-out"
-                    style={{ backgroundColor: colors.crimson }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#8B1313')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.crimson)}
-                  >
-                    Proceder al Pago
+                <Link href="/checkout" passHref className="w-full md:w-auto">
+                  <button className="w-full md:w-auto px-12 py-4 bg-accent hover:bg-[#8B1313] text-white tracking-widest uppercase text-xs font-bold transition-all duration-300 rounded-sm">
+                    Finalizar Adquisición
                   </button>
                 </Link>
               ) : (
-                <Link href="/login" passHref> {/* Enlace a la página de login */}
-                  <button
-                    className="px-10 py-4 rounded-md font-bold text-white text-xl transition-all duration-300 ease-in-out"
-                    style={{ backgroundColor: colors.darkGray }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2E2E2E')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.darkGray)}
-                  >
-                    Iniciar Sesión para Comprar
-                  </button>
-                </Link>
+                <div className="flex flex-col items-end gap-4 w-full md:w-auto">
+                  <p className="text-sm text-muted font-sans italic">Debes iniciar sesión para completar la adquisición.</p>
+                  <Link href="/login" passHref className="w-full md:w-auto">
+                    <button className="w-full md:w-auto px-12 py-4 bg-transparent border border-white/20 hover:border-primary text-foreground hover:text-primary tracking-widest uppercase text-xs transition-all duration-300 rounded-sm">
+                      Identificarse
+                    </button>
+                  </Link>
+                </div>
               )}
             </div>
-            <div className="mt-4 text-center">
-                <Link href="/vinos" passHref>
-                    <button
-                        className="text-sm font-semibold hover:underline"
-                        style={{color: colors.darkText}}
-                    >
-                        Continuar Comprando
-                    </button>
-                </Link>
-            </div>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

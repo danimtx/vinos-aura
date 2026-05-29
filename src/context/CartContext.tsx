@@ -37,40 +37,51 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addToCart = useCallback((itemToAdd: { id: string; name: string; price: number; img?: string; quantity?: number }) => {
     const quantityToAdd = itemToAdd.quantity !== undefined ? itemToAdd.quantity : 1;
     
+    let isUpdated = false;
+
     setCart((prevCart) => {
       const existingItemIndex = prevCart.findIndex((item) => item.id === itemToAdd.id);
 
       if (existingItemIndex > -1) {
+        isUpdated = true;
         const updatedCart = [...prevCart];
         updatedCart[existingItemIndex] = {
           ...updatedCart[existingItemIndex],
           quantity: updatedCart[existingItemIndex].quantity + quantityToAdd
         };
-        toast.success(`"${itemToAdd.name}" actualizado en el carrito.`, {
-          style: {
-            background: '#D9C3A3', // warmBeige
-            color: '#3E3E3E', // darkText
-          },
-          iconTheme: {
-            primary: '#3E3E3E',
-            secondary: '#FFFFFF',
-          },
-        });
         return updatedCart;
       } else {
-        toast.success(`"${itemToAdd.name}" agregado al carrito.`, {
-          style: {
-            background: '#B31B1B', // crimson
-            color: '#FFFFFF', // white
-          },
-          iconTheme: {
-            primary: '#FFFFFF',
-            secondary: '#B31B1B',
-          },
-        });
+        isUpdated = false;
         return [...prevCart, { ...itemToAdd, quantity: quantityToAdd }];
       }
     });
+
+    // Side effects outside the setState callback
+    if (isUpdated) {
+      toast.success(`"${itemToAdd.name}" actualizado en el carrito.`, {
+        style: {
+          background: '#111',
+          color: '#F5F5F0',
+          border: '1px solid rgba(255,255,255,0.1)',
+        },
+        iconTheme: {
+          primary: '#D4AF37', // Gold
+          secondary: '#111',
+        },
+      });
+    } else {
+      toast.success(`"${itemToAdd.name}" agregado al carrito.`, {
+        style: {
+          background: '#111',
+          color: '#F5F5F0',
+          border: '1px solid rgba(255,255,255,0.1)',
+        },
+        iconTheme: {
+          primary: '#8B1313', // Crimson
+          secondary: '#F5F5F0',
+        },
+      });
+    }
   }, []);
 
   const increaseQuantity = useCallback((id: string) => {
@@ -93,12 +104,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart((prevCart) => prevCart.filter((item) => item.id !== id));
     toast.error('Producto eliminado del carrito.', {
       style: {
-        background: '#DC3545', // Un rojo estándar para error
-        color: '#FFFFFF',
+        background: '#111',
+        color: '#F5F5F0',
+        border: '1px solid rgba(255,255,255,0.1)',
       },
       iconTheme: {
-        primary: '#FFFFFF',
-        secondary: '#DC3545',
+        primary: '#8B1313',
+        secondary: '#F5F5F0',
       },
     });
   }, []);

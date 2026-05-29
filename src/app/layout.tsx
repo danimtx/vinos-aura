@@ -1,24 +1,31 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
 import "./globals.css";
-import { EB_Garamond } from 'next/font/google';
-import Navbar from '../components/Navbar'; // Tu componente Navbar
-import Footer from '../components/Footer'; // Tu componente Footer
+import { Cormorant_Garamond, Outfit } from 'next/font/google';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import { CartProvider } from '../context/CartContext';
 import { AuthProvider } from '../context/AuthContext';
-import { Toaster } from 'react-hot-toast'; // Importar Toaster de react-hot-toast
+import { Toaster } from 'react-hot-toast';
 import Chatbot from '../components/Chatbot';
 
-const ebGaramond = EB_Garamond({
+const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
-  variable: '--font-eb-garamond',
-  weight: ['400', '700'],
+  variable: '--font-cormorant',
+  weight: ['300', '400', '500', '600', '700'],
+  display: 'swap',
+});
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  weight: ['300', '400', '500'],
   display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: "Vinos Aura",
-  description: "Página web de Vinos Aura",
+  title: "Vinos Aura | Elegancia y Tradición",
+  description: "Descubre la pasión detrás de cada botella en Vinos Aura.",
 };
 
 export default function RootLayout({
@@ -27,28 +34,30 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={ebGaramond.variable}>
-      <body>
-        {/* AuthProvider debe envolver a CartProvider y el resto de la aplicación */}
+    <html lang="es" className={`${cormorant.variable} ${outfit.variable}`}>
+      <body className="bg-background text-foreground antialiased relative">
+        <div className="noise-overlay pointer-events-none"></div>
         <AuthProvider>
           <CartProvider>
             <Navbar />
-            {children}
+            <main className="relative z-10 flex-grow">
+              {children}
+            </main>
             <Footer />
-            {/* Renderizar el Toaster para las notificaciones globales */}
             <Toaster
-              position="bottom-right" // Puedes cambiar la posición (top-left, top-center, etc.)
-              reverseOrder={false} // Para que los nuevos toasts aparezcan debajo de los viejos
+              position="bottom-right"
+              reverseOrder={false}
               toastOptions={{
-                duration: 3000, // Duración por defecto de los toasts
+                duration: 3000,
                 style: {
-                  borderRadius: '10px',
-                  background: '#333',
-                  color: '#fff',
+                  borderRadius: '0px',
+                  background: '#1A1A1A',
+                  color: '#F5F5F0',
+                  border: '1px solid #333',
+                  fontFamily: 'var(--font-outfit)',
                 },
               }}
             />
-            {/* Renderizar el Chatbot */}
             <Chatbot />
           </CartProvider>
         </AuthProvider>

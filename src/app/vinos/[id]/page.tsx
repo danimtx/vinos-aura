@@ -5,12 +5,13 @@ import { useState, useEffect, useContext } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { db } from '@/lib/firebase'; // Asegúrate de que esta ruta sea correcta
+import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { CartContext } from '../../../context/CartContext'; // Ruta al CartContext
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'; // Iconos para desplegar/contraer
+import { CartContext } from '../../../context/CartContext';
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import { motion, AnimatePresence } from 'framer-motion';
+import Bottle3D from '@/components/Bottle3D';
 
-// Definición de la interfaz para un producto
 interface Product {
   id: string;
   name: string;
@@ -20,32 +21,21 @@ interface Product {
   img: string;
   alt: string;
   enabled: boolean;
-  info?: string; // Campo para información adicional del producto
+  info?: string;
 }
-
-const colors = {
-  crimson: '#B31B1B',
-  warmBeige: '#D9C3A3',
-  darkGray: '#3E3E3E',
-  lightGrayBg: '#F5F5F5',
-  white: '#FFFFFF',
-  darkText: '#3E3E3E',
-  golden: '#C5A55B',
-};
 
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const productId = params.id as string; // Obtener el ID del producto de la URL
+  const productId = params.id as string;
 
-  const { addToCart, cart } = useContext(CartContext)!; // Acceder a addToCart y cart
+  const { addToCart, cart } = useContext(CartContext)!;
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAddingToCartFlag, setIsAddingToCartFlag] = useState(false); // Flag para evitar dobles clics
+  const [isAddingToCartFlag, setIsAddingToCartFlag] = useState(false);
 
-  // Estados para las secciones desplegables
   const [showProductInfo, setShowProductInfo] = useState(true);
   const [showReturnPolicy, setShowReturnPolicy] = useState(false);
   const [showShippingInfo, setShowShippingInfo] = useState(false);
@@ -60,10 +50,15 @@ export default function ProductDetailPage() {
     const fetchProduct = async () => {
       try {
         setLoading(true);
+        if (!db) {
+          setError("Configuración de base de datos faltante.");
+          setLoading(false);
+          return;
+        }
         const productRef = doc(db, 'products', productId);
         const docSnap = await getDoc(productRef);
 
-        if (docSnap.exists() && docSnap.data().enabled) { // Solo cargar si está habilitado
+        if (docSnap.exists() && docSnap.data().enabled) {
           setProduct({ id: docSnap.id, ...docSnap.data() } as Product);
         } else {
           setError("Producto no encontrado o no disponible.");
@@ -77,36 +72,32 @@ export default function ProductDetailPage() {
     };
 
     fetchProduct();
-  }, [productId]); // Se ejecuta cuando el ID del producto cambia
+  }, [productId]);
 
   const handleAddToCart = () => {
     if (!product || isAddingToCartFlag) return;
+    setIsAddingToCartFlag(true);
 
-    setIsAddingToCartFlag(true); // Deshabilita el botón temporalmente
-
-    // Siempre agrega 1 unidad al carrito
     addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
       img: product.img,
-      quantity: 1, // Siempre agrega 1 unidad
+      quantity: 1,
     });
 
     setTimeout(() => {
-      setIsAddingToCartFlag(false); // Habilita el botón después de un breve retraso
-    }, 300); // Pequeño retraso para evitar dobles clics en desarrollo
+      setIsAddingToCartFlag(false);
+    }, 300);
   };
 
   const handleRealizarCompra = () => {
     if (!product || isAddingToCartFlag) return;
-
-    setIsAddingToCartFlag(true); // Deshabilita el botón temporalmente
+    setIsAddingToCartFlag(true);
 
     const itemInCart = cart.find(item => item.id === product.id);
 
     if (!itemInCart) {
-      // Si el producto NO está en el carrito, agrégalo con cantidad 1
       addToCart({
         id: product.id,
         name: product.name,
@@ -115,36 +106,29 @@ export default function ProductDetailPage() {
         quantity: 1,
       });
     }
-    // Si ya está en el carrito, no se agrega nada, simplemente se redirige.
 
-    // Redirigir al carrito después de un breve retraso para que la acción se registre
     setTimeout(() => {
-      setIsAddingToCartFlag(false); // Habilita el botón
+      setIsAddingToCartFlag(false);
       router.push('/cart');
     }, 300);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ backgroundColor: colors.lightGrayBg, color: colors.darkText }}>
-        <p className="text-xl font-bold">Cargando detalles del vino...</p>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mt-4" style={{ borderColor: colors.crimson }}></div>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center opacity-70">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-primary border-r-2 border-r-transparent mb-4"></div>
+        <p className="font-sans font-light tracking-widest uppercase text-xs text-muted">Cargando detalles...</p>
       </div>
     );
   }
 
   if (error || !product) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8" style={{ backgroundColor: colors.lightGrayBg, color: colors.darkText }}>
-        <h2 className="text-2xl font-bold text-red-600 mb-4">{error || "Vino no encontrado."}</h2>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center">
+        <h2 className="text-2xl font-serif text-accent mb-6">{error || "Vino no encontrado."}</h2>
         <Link href="/vinos" passHref>
-          <button
-            className="px-6 py-3 rounded-md font-bold text-white transition-all duration-300 ease-in-out shadow-md"
-            style={{ backgroundColor: colors.crimson }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#8B1313')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.crimson)}
-          >
-            Volver a la lista de Vinos
+          <button className="px-6 py-3 rounded-sm font-sans tracking-widest uppercase text-xs text-white bg-accent hover:bg-[#8B1313] transition-colors duration-300">
+            Volver a la Colección
           </button>
         </Link>
       </div>
@@ -152,135 +136,178 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="font-['EB_Garamond'] py-16 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: colors.lightGrayBg, color: colors.darkText }}>
-      <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-xl p-8 relative">
+    <div className="bg-background text-foreground min-h-screen pt-32 pb-24 relative z-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
         {/* Breadcrumbs */}
-        <div className="absolute top-4 left-4 text-sm text-gray-600">
-          <Link href="/" className="hover:underline">Inicio</Link> /
-          <Link href="/vinos" className="hover:underline ml-1">Vinos</Link> /
-          <span className="ml-1 font-semibold">{product.name}</span>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-xs font-sans tracking-widest uppercase text-muted mb-8 flex items-center gap-2"
+        >
+          <Link href="/" className="hover:text-primary transition-colors">Inicio</Link>
+          <span>/</span>
+          <Link href="/vinos" className="hover:text-primary transition-colors">Colección</Link>
+          <span>/</span>
+          <span className="text-foreground">{product.name}</span>
+        </motion.div>
 
-        {/* Botón Volver Atrás */}
-        <div className="absolute top-4 right-4">
-          <button
-            onClick={() => router.back()}
-            className="px-4 py-2 rounded-md font-bold text-sm transition-all duration-300 ease-in-out"
-            style={{ backgroundColor: colors.warmBeige, color: colors.darkText }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.golden)}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.warmBeige)}
-          >
-            Volver Atrás
-          </button>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-12 mt-8"> {/* Añadido mt-8 para separar del breadcrumb */}
-          {/* Columna de la Imagen */}
-          <div className="w-full md:w-1/2 flex items-center justify-center p-4">
-            <div className="relative w-full max-w-md aspect-square">
-              <Image
-                src={product.img || '/placeholder-wine.png'}
-                alt={product.alt || product.name}
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-contain w-full h-full rounded-lg"
-                priority
-                onError={(e) => {
-                  //console.error(`Error al cargar la imagen del producto: ${product.img}`, e.target.src);
-                  (e.target as HTMLImageElement).src = '/placeholder-wine.png';
-                }}
-              />
-            </div>
+        <div className="flex flex-col md:flex-row gap-16 relative">
+          
+          {/* Botón Volver (Móvil) */}
+          <div className="md:hidden mb-4">
+            <button
+              onClick={() => router.back()}
+              className="text-xs font-sans tracking-widest uppercase text-muted hover:text-primary transition-colors"
+            >
+              ← Volver
+            </button>
           </div>
 
-          {/* Columna de la Información del Producto y Acciones */}
-          <div className="w-full md:w-1/2 flex flex-col justify-center text-left">
-            <h1 className="text-4xl font-bold mb-2" style={{ color: colors.darkText }}>
+          {/* Columna de la Imagen 3D */}
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="w-full md:w-1/2"
+          >
+            <div className="sticky top-32 w-full aspect-[3/4] bg-gradient-to-b from-[#151515] to-[#0A0A0A] rounded-sm border border-white/5 flex items-center justify-center p-0 md:p-8 overflow-hidden group">
+              <Bottle3D textureUrl={product.img || '/placeholder-wine.png'} />
+              <div className="absolute inset-0 border border-primary/20 m-6 pointer-events-none transition-all duration-700 group-hover:m-4 opacity-50 z-0"></div>
+            </div>
+          </motion.div>
+
+          {/* Columna de Información */}
+          <motion.div 
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="w-full md:w-1/2 flex flex-col justify-start"
+          >
+            {/* Botón Volver (Desktop) */}
+            <div className="hidden md:flex justify-end mb-6">
+              <button
+                onClick={() => router.back()}
+                className="text-xs font-sans tracking-widest uppercase text-muted hover:text-primary transition-colors flex items-center gap-2"
+              >
+                <span>←</span> Volver
+              </button>
+            </div>
+
+            <span className="text-primary tracking-[0.3em] uppercase text-xs font-sans block mb-3">
+              {product.sku}
+            </span>
+            <h1 className="text-5xl md:text-6xl font-serif font-light mb-6 text-[#F5F5F0] leading-tight">
               {product.name}
             </h1>
-            <p className="text-sm text-gray-600 mb-2">{product.sku}</p>
-            <p className="text-3xl font-bold mb-6" style={{ color: colors.crimson }}>
+            
+            <div className="w-12 h-[1px] bg-primary/50 mb-6"></div>
+
+            <p className="text-4xl font-serif text-primary italic mb-8">
               ${product.price.toFixed(2)}
             </p>
 
-            {/* Botón de Agregar al Carrito */}
-            <button
-              onClick={handleAddToCart}
-              className="w-full px-6 py-3 rounded-md font-bold text-white mb-3 transition-all duration-300 ease-in-out shadow-md"
-              style={{ backgroundColor: colors.crimson }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#8B1313')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.crimson)}
-              disabled={isAddingToCartFlag}
-            >
-              {isAddingToCartFlag ? 'Agregando...' : 'Agregar al Carrito'}
-            </button>
+            <p className="font-sans font-light text-muted text-lg leading-relaxed mb-10">
+              {product.description}
+            </p>
 
-            {/* Botón de Realizar Compra */}
-            <button
-              onClick={handleRealizarCompra}
-              className="w-full px-6 py-3 rounded-md font-bold text-center transition-all duration-300 ease-in-out border-2"
-              style={{ backgroundColor: colors.darkGray, color: colors.white, borderColor: colors.darkGray }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.white; e.currentTarget.style.color = colors.darkGray; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.darkGray; e.currentTarget.style.color = colors.white; }}
-              disabled={isAddingToCartFlag}
-            >
-              Realizar Compra
-            </button>
+            {/* Acciones */}
+            <div className="flex flex-col gap-4 mb-16">
+              <button
+                onClick={handleAddToCart}
+                className="w-full py-4 bg-accent hover:bg-[#8B1313] text-white tracking-widest uppercase text-xs font-bold transition-all duration-300 rounded-sm disabled:opacity-50"
+                disabled={isAddingToCartFlag}
+              >
+                {isAddingToCartFlag ? 'Actualizando...' : 'Agregar a la Bodega'}
+              </button>
+              <button
+                onClick={handleRealizarCompra}
+                className="w-full py-4 bg-transparent border border-white/20 hover:border-primary text-foreground hover:text-primary tracking-widest uppercase text-xs transition-all duration-300 rounded-sm disabled:opacity-50"
+                disabled={isAddingToCartFlag}
+              >
+                Proceder al Checkout
+              </button>
+            </div>
 
-            {/* Secciones Desplegables */}
-            <div className="mt-8">
-              {/* Información del Producto */}
-              <div className="border-b py-4" style={{ borderColor: colors.warmBeige }}>
+            {/* Acordeones */}
+            <div className="space-y-2 border-t border-white/10 pt-8">
+              {/* Información */}
+              <div className="border-b border-white/10 py-4">
                 <button
-                  className="flex justify-between items-center w-full text-xl font-bold"
+                  className="flex justify-between items-center w-full text-left font-serif text-xl font-light text-foreground hover:text-primary transition-colors"
                   onClick={() => setShowProductInfo(!showProductInfo)}
-                  style={{ color: colors.darkText }}
                 >
-                  INFORMACIÓN DEL PRODUCTO
-                  {showProductInfo ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
+                  Notas de Cata & Detalles
+                  {showProductInfo ? <ChevronUpIcon className="h-5 w-5 text-primary" /> : <ChevronDownIcon className="h-5 w-5 text-muted" />}
                 </button>
-                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${showProductInfo ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}>
-                  <p className="text-sm text-gray-700 leading-relaxed mt-3">
-                    {product.info || "Sin información. Este es un espacio para agregar detalles sobre tu producto como su tamaño, materiales, instrucciones de uso y mantenimiento."}
-                  </p>
-                </div>
+                <AnimatePresence>
+                  {showProductInfo && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <p className="font-sans font-light text-muted text-sm leading-relaxed mt-4 pb-2">
+                        {product.info || "Notas de frutos rojos oscuros, taninos sedosos y un final prolongado. Ideal para acompañar carnes rojas y quesos maduros."}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              {/* Política de Devolución y Reembolso */}
-              <div className="border-b py-4" style={{ borderColor: colors.warmBeige }}>
+              {/* Envíos */}
+              <div className="border-b border-white/10 py-4">
                 <button
-                  className="flex justify-between items-center w-full text-xl font-bold"
-                  onClick={() => setShowReturnPolicy(!showReturnPolicy)}
-                  style={{ color: colors.darkText }}
-                >
-                  POLÍTICA DE DEVOLUCIÓN Y REEMBOLSO
-                  {showReturnPolicy ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
-                </button>
-                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${showReturnPolicy ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}>
-                  <p className="text-sm text-gray-700 leading-relaxed mt-3">
-                    En Vinos Aura, tu satisfacción es nuestra prioridad. Si no estás completamente satisfecho con tu compra, puedes devolver el producto en su estado original dentro de los 30 días posteriores a la entrega para un reembolso completo o un cambio. Por favor, asegúrate de que el producto no haya sido abierto ni dañado. Para iniciar una devolución, contáctanos a <a href="mailto:soporte@vinosaura.com" className="text-crimson hover:underline">soporte@vinosaura.com</a> con tu número de pedido.
-                  </p>
-                </div>
-              </div>
-
-              {/* Información de Envío */}
-              <div className="py-4">
-                <button
-                  className="flex justify-between items-center w-full text-xl font-bold"
+                  className="flex justify-between items-center w-full text-left font-serif text-xl font-light text-foreground hover:text-primary transition-colors"
                   onClick={() => setShowShippingInfo(!showShippingInfo)}
-                  style={{ color: colors.darkText }}
                 >
-                  INFORMACIÓN DE ENVÍO
-                  {showShippingInfo ? <ChevronUpIcon className="h-6 w-6" /> : <ChevronDownIcon className="h-6 w-6" />}
+                  Envío & Manipulación
+                  {showShippingInfo ? <ChevronUpIcon className="h-5 w-5 text-primary" /> : <ChevronDownIcon className="h-5 w-5 text-muted" />}
                 </button>
-                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${showShippingInfo ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}>
-                  <p className="text-sm text-gray-700 leading-relaxed mt-3">
-                    Ofrecemos envío estándar gratuito en todos los pedidos superiores a $50. Los pedidos se procesan en 1-2 días hábiles y el tiempo de entrega estimado es de 3-7 días hábiles. Utilizamos empaques especiales para garantizar que tus vinos lleguen en perfectas condiciones. Para envíos urgentes, ofrecemos opciones de envío express con costo adicional.
-                  </p>
-                </div>
+                <AnimatePresence>
+                  {showShippingInfo && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <p className="font-sans font-light text-muted text-sm leading-relaxed mt-4 pb-2">
+                        Envío refrigerado especializado. Los pedidos se procesan en 24h. Entrega estándar en 3-5 días hábiles. Embalaje premium diseñado para proteger cada botella de impactos y cambios térmicos.
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Devoluciones */}
+              <div className="border-b border-white/10 py-4">
+                <button
+                  className="flex justify-between items-center w-full text-left font-serif text-xl font-light text-foreground hover:text-primary transition-colors"
+                  onClick={() => setShowReturnPolicy(!showReturnPolicy)}
+                >
+                  Garantía Vinos Aura
+                  {showReturnPolicy ? <ChevronUpIcon className="h-5 w-5 text-primary" /> : <ChevronDownIcon className="h-5 w-5 text-muted" />}
+                </button>
+                <AnimatePresence>
+                  {showReturnPolicy && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <p className="font-sans font-light text-muted text-sm leading-relaxed mt-4 pb-2">
+                        Si la botella presenta algún defecto (como corcho dañado o alteraciones por temperatura), garantizamos su reemplazo inmediato dentro de los 7 días posteriores a la entrega. Escríbenos a concierge@vinosaura.com.
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
-          </div>
+
+          </motion.div>
         </div>
       </div>
     </div>

@@ -5,7 +5,8 @@ import { useState, useContext, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { CartContext } from '../../context/CartContext';
-import { EyeIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Importaciones de Firebase
 import { db } from '@/lib/firebase';
@@ -30,7 +31,7 @@ export default function Vinos() {
   const context = useContext(CartContext);
   if (!context) {
     console.error('CartContext no está disponible. Asegúrate de que CartProvider envuelva la aplicación.');
-    return <div style={{ color: 'red', textAlign: 'center', padding: '20px' }}>Error: Contexto del carrito no encontrado. Por favor, recarga la página o contacta al soporte.</div>;
+    return <div className="text-red-500 text-center py-20 font-sans">Error: Contexto del carrito no encontrado.</div>;
   }
   const { addToCart } = context;
 
@@ -41,11 +42,17 @@ export default function Vinos() {
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-
   // Efecto para cargar los productos desde Firestore
   useEffect(() => {
     setProductsLoading(true);
     setProductsError(null);
+
+    if (!db) {
+      console.warn("Base de datos no inicializada. Faltan variables de entorno de Firebase.");
+      setProductsError("El catálogo no está disponible en este momento. Por favor, configura Firebase.");
+      setProductsLoading(false);
+      return;
+    }
 
     const q = query(collection(db, 'products'), where('enabled', '==', true));
 
@@ -56,7 +63,6 @@ export default function Vinos() {
       })) as Product[];
       setProducts(productsData);
       setProductsLoading(false);
-      console.log("Productos cargados desde Firestore:", productsData);
     }, (error) => {
       console.error("Error al escuchar productos desde Firestore:", error);
       setProductsError("Error al cargar los vinos. Por favor, inténtalo de nuevo más tarde.");
@@ -72,7 +78,6 @@ export default function Vinos() {
   };
 
   const handleAddToCartSimple = (product: Product) => {
-    // Siempre agrega solo 1 unidad
     addToCart({ 
       id: product.id, 
       name: product.name, 
@@ -95,187 +100,183 @@ export default function Vinos() {
     }
   };
 
-  const colors = {
-    crimson: '#B31B1B',
-    warmBeige: '#D9C3A3',
-    darkGray: '#3E3E3E',
-    lightGrayBg: '#F5F5F5',
-    white: '#FFFFFF',
-    darkText: '#3E3E3E',
-    golden: '#C5A55B',
-  };
-
   return (
-    <div className="font-['EB_Garamond']" style={{ backgroundColor: colors.lightGrayBg, color: colors.darkText }}>
-      <section className="py-16 px-4 sm:px-6 lg:px-8 text-center bg-white">
-        <h2
-          className="text-4xl font-bold mb-12 uppercase"
-          style={{ color: colors.crimson }}
+    <div className="bg-background text-foreground min-h-screen pt-32 pb-24 relative z-10">
+      <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          className="text-center mb-16"
         >
-          NUESTROS VINOS
-        </h2>
+          <span className="text-primary tracking-[0.3em] uppercase text-xs font-sans block mb-4">
+            Cosecha Exclusiva
+          </span>
+          <h2 className="text-5xl md:text-7xl font-serif font-light text-[#F5F5F0]">
+            Nuestra <span className="italic text-primary">Colección</span>
+          </h2>
+        </motion.div>
 
         {productsLoading ? (
-          <div className="text-center py-10">
-            <p className="text-xl font-medium" style={{ color: colors.darkText }}>Cargando vinos...</p>
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mt-4" style={{ borderColor: colors.crimson }}></div>
+          <div className="flex flex-col items-center justify-center py-20 opacity-70">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-primary border-r-2 border-r-transparent mb-4"></div>
+            <p className="font-sans font-light tracking-widest uppercase text-xs">Descubriendo vinos...</p>
           </div>
         ) : productsError ? (
-          <div className="text-center py-10">
-            <p className="text-xl font-medium text-red-600">{productsError}</p>
+          <div className="text-center py-20 text-accent font-sans">
+            <p>{productsError}</p>
           </div>
         ) : products.length === 0 ? (
-          <div className="text-center py-10">
-            <p className="text-xl font-medium" style={{ color: colors.darkText }}>No hay vinos disponibles en este momento.</p>
+          <div className="text-center py-20 text-muted font-sans font-light">
+            <p>La bodega está siendo preparada. Vuelve pronto.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-16"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: { staggerChildren: 0.15 }
+              }
+            }}
+          >
             {products.map((product) => (
-              <div
+              <motion.div
                 key={product.id}
-                className="relative p-0 rounded-lg text-center overflow-hidden group shadow-md hover:shadow-xl transition-all duration-300 ease-in-out"
-                style={{ backgroundColor: colors.white }}
+                variants={{
+                  hidden: { opacity: 0, y: 40 },
+                  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+                }}
+                className="group relative flex flex-col items-center"
               >
-                {/* Contenedor de la Imagen */}
-                <div className="relative w-full h-80 bg-gray-100 overflow-hidden">
+                {/* Image Container */}
+                <div className="relative w-full aspect-[3/4] bg-gradient-to-b from-[#151515] to-[#0A0A0A] overflow-hidden rounded-sm border border-white/5 group-hover:border-primary/30 transition-colors duration-500 flex items-center justify-center p-8 mb-6">
                   <Image
                     src={product.img || '/placeholder-wine.png'}
                     alt={product.alt || product.name}
                     width={320}
                     height={320}
-                    className="object-contain w-full h-full"
+                    className="object-contain w-full h-full transition-transform duration-700 ease-in-out group-hover:scale-110"
                     priority
                     onError={(e) => {
-                      console.error(`Error al cargar la imagen: ${product.img}`);
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder-wine.png';
+                    }}
+                  />
+                  {/* Overlay Hover Actions */}
+                  <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4 backdrop-blur-sm">
+                    <button
+                      onClick={() => handleQuickViewClick(product)}
+                      className="w-12 h-12 bg-white/10 hover:bg-primary border border-white/20 hover:border-primary rounded-full flex items-center justify-center text-white transition-all duration-300 transform hover:scale-110"
+                      aria-label="Vista rápida"
+                    >
+                      <EyeIcon className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => handleAddToCartSimple(product)}
+                      className="w-12 h-12 bg-accent/80 hover:bg-accent border border-accent/20 rounded-full flex items-center justify-center text-white transition-all duration-300 transform hover:scale-110"
+                      aria-label="Agregar al carrito"
+                    >
+                      <ShoppingCartIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Product Info */}
+                <div className="text-center w-full px-2">
+                  <h3 className="font-serif text-2xl font-light mb-2 text-foreground tracking-wide group-hover:text-primary transition-colors">
+                    {product.name}
+                  </h3>
+                  <div className="w-8 h-[1px] bg-primary/50 mx-auto mb-3"></div>
+                  <p className="font-sans text-lg font-light text-muted">
+                    ${product.price.toFixed(2)}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </section>
+
+      {/* Modal de Vista Rápida */}
+      <AnimatePresence>
+        {isQuickViewOpen && selectedProduct && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-background/80 backdrop-blur-md p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.95, y: 20, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="relative bg-[#111] border border-white/10 shadow-2xl p-8 max-w-4xl w-full flex flex-col md:flex-row gap-12"
+            >
+              {/* Botón de cerrar */}
+              <button
+                onClick={() => setIsQuickViewOpen(false)}
+                className="absolute top-6 right-6 text-muted hover:text-primary transition-colors z-10"
+              >
+                <span className="text-3xl font-light">×</span>
+              </button>
+
+              {/* Imagen */}
+              <div className="w-full md:w-1/2 flex items-center justify-center bg-gradient-to-b from-[#1a1a1a] to-[#0A0A0A] border border-white/5 rounded-sm p-8">
+                <div className="relative w-full aspect-[3/4]">
+                  <Image
+                    src={selectedProduct.img || '/placeholder-wine.png'}
+                    alt={selectedProduct.alt || selectedProduct.name}
+                    fill
+                    className="object-contain drop-shadow-2xl"
+                    onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.src = '/placeholder-wine.png';
                     }}
                   />
                 </div>
+              </div>
 
-                {/* Contenido de la tarjeta */}
-                <div className="p-4 pt-6">
-                  <h3
-                    className="text-lg font-bold mb-1 uppercase"
-                    style={{ color: colors.darkText }}
-                  >
-                    {product.name}
-                  </h3>
-                  <p
-                    className="text-xl font-bold mb-6"
-                    style={{ color: colors.crimson }}
-                  >
-                    ${product.price.toFixed(2)}
-                  </p>
+              {/* Información */}
+              <div className="w-full md:w-1/2 flex flex-col justify-center text-left py-4">
+                <span className="text-primary text-xs uppercase tracking-widest font-sans mb-3">
+                  {selectedProduct.sku}
+                </span>
+                <h2 className="text-4xl font-serif font-light mb-4 text-foreground leading-tight">
+                  {selectedProduct.name}
+                </h2>
+                <p className="text-3xl font-serif text-primary italic mb-6">
+                  ${selectedProduct.price.toFixed(2)}
+                </p>
+                <p className="text-sm font-sans font-light text-muted mb-10 leading-relaxed">
+                  {selectedProduct.description}
+                </p>
 
-                  {/* Botones de acción */}
-                  <div className="flex gap-2">
+                <div className="flex flex-col gap-4 mt-auto">
+                  <button
+                    onClick={handleAddToCartFromQuickView}
+                    className="w-full py-4 bg-accent hover:bg-[#8B1313] text-white tracking-widest uppercase text-xs font-bold transition-all duration-300 rounded-sm"
+                  >
+                    Agregar a la Bodega
+                  </button>
+                  <Link href={`/vinos/${selectedProduct.id}`} passHref className="w-full">
                     <button
-                      onClick={() => handleAddToCartSimple(product)}
-                      className="flex-1 px-4 py-2 rounded-md font-bold text-white transition-all duration-300"
-                      style={{ backgroundColor: colors.crimson }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#8B1313')}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.crimson)}
+                      onClick={() => setIsQuickViewOpen(false)}
+                      className="w-full py-4 bg-transparent border border-white/20 hover:border-primary text-foreground hover:text-primary tracking-widest uppercase text-xs transition-all duration-300 rounded-sm"
                     >
-                      Agregar al Carrito
+                      Descubrir Detalles
                     </button>
-                    <button
-                      onClick={() => handleQuickViewClick(product)}
-                      className="px-4 py-2 rounded-md font-bold border-2 transition-all duration-300 flex items-center justify-center"
-                      style={{ 
-                        backgroundColor: 'transparent', 
-                        color: colors.darkGray, 
-                        borderColor: colors.darkGray 
-                      }}
-                      onMouseEnter={(e) => { 
-                        e.currentTarget.style.backgroundColor = colors.darkGray; 
-                        e.currentTarget.style.color = colors.white; 
-                      }}
-                      onMouseLeave={(e) => { 
-                        e.currentTarget.style.backgroundColor = 'transparent'; 
-                        e.currentTarget.style.color = colors.darkGray; 
-                      }}
-                    >
-                      <EyeIcon className="h-5 w-5" />
-                    </button>
-                  </div>
+                  </Link>
                 </div>
               </div>
-            ))}
-          </div>
+            </motion.div>
+          </motion.div>
         )}
-      </section>
-
-      {/* Modal de Vista Rápida */}
-      {isQuickViewOpen && selectedProduct && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-transparent backdrop-blur-sm transition-all duration-300">
-          <div
-            className="relative bg-white rounded-lg shadow-2xl p-8 max-w-4xl w-full mx-4 flex flex-col md:flex-row gap-8"
-            style={{ color: colors.darkText }}
-          >
-            {/* Botón de cerrar modal */}
-            <button
-              onClick={() => setIsQuickViewOpen(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition-colors z-10 text-2xl font-bold"
-            >
-              ×
-            </button>
-
-            {/* Columna de la Imagen */}
-            <div className="w-full md:w-1/2 flex items-center justify-center p-4">
-              <div className="relative w-full max-w-md aspect-square">
-                <Image
-                  src={selectedProduct.img || '/placeholder-wine.png'}
-                  alt={selectedProduct.alt || selectedProduct.name}
-                  width={400}
-                  height={400}
-                  className="object-contain w-full h-full rounded-lg"
-                  onError={(e) => {
-                    console.error(`Error al cargar la imagen en QuickView: ${selectedProduct.img}`);
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder-wine.png';
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Columna de la Información del Producto */}
-            <div className="w-full md:w-1/2 flex flex-col justify-center text-left">
-              <h2 className="text-3xl font-bold mb-2" style={{ color: colors.darkText }}>
-                {selectedProduct.name}
-              </h2>
-              <p className="text-sm text-gray-600 mb-2">{selectedProduct.sku}</p>
-              <p className="text-2xl font-bold mb-4" style={{ color: colors.crimson }}>
-                ${selectedProduct.price.toFixed(2)}
-              </p>
-              <p className="text-sm text-gray-600 mb-6 leading-relaxed">{selectedProduct.description}</p>
-
-              {/* Botones de acción del Modal */}
-              <button
-                onClick={handleAddToCartFromQuickView}
-                className="w-full px-6 py-3 rounded-md font-bold text-white mb-3 transition-all duration-300 ease-in-out shadow-md"
-                style={{ backgroundColor: colors.crimson }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#8B1313')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.crimson)}
-              >
-                Agregar al carrito
-              </button>
-
-              <Link href={`/vinos/${selectedProduct.id}`} passHref>
-                <button
-                  onClick={() => setIsQuickViewOpen(false)}
-                  className="w-full px-6 py-3 rounded-md font-bold text-center transition-all duration-300 ease-in-out border-2"
-                  style={{ backgroundColor: 'transparent', color: colors.crimson, borderColor: colors.crimson }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.crimson; e.currentTarget.style.color = colors.white; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = colors.crimson; }}
-                >
-                  Ver más detalles
-                </button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+      </AnimatePresence>
     </div>
   );
 }

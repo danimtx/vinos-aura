@@ -6,10 +6,11 @@ import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, addDoc, query, where, onSnapshot, serverTimestamp, updateDoc, deleteDoc, runTransaction, orderBy } from 'firebase/firestore'; // <-- Asegúrate que 'orderBy' esté aquí
+import { collection, doc, getDoc, addDoc, query, where, onSnapshot, serverTimestamp, runTransaction, orderBy } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import { UserCircleIcon, HandThumbUpIcon, HandThumbDownIcon, ArrowUturnLeftIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 
 // Definición de interfaces
 interface BlogPost {
@@ -18,7 +19,7 @@ interface BlogPost {
   content: string;
   img: string;
   alt: string;
-  createdAt: any; // Firebase Timestamp
+  createdAt: any;
   authorId: string;
   authorName: string;
 }
@@ -30,29 +31,19 @@ interface Comment {
   userName: string;
   content: string;
   createdAt: any;
-  parentId?: string; // Para respuestas
+  parentId?: string;
   likes: number;
   dislikes: number;
-  replies?: Comment[]; // Para anidar respuestas en el frontend
+  replies?: Comment[];
 }
 
 interface UserReaction {
-  id: string; // userId_commentId
+  id: string;
   commentId: string;
   userId: string;
   type: 'like' | 'dislike' | 'none';
   timestamp: any;
 }
-
-const colors = {
-  crimson: '#B31B1B',
-  warmBeige: '#D9C3A3',
-  darkGray: '#3E3E3E',
-  lightGrayBg: '#F5F5F5',
-  white: '#FFFFFF',
-  darkText: '#3E3E3E',
-  golden: '#C5A55B',
-};
 
 export default function BlogPostDetailPage() {
   const params = useParams();
@@ -67,7 +58,7 @@ export default function BlogPostDetailPage() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);
   const [commentError, setCommentError] = useState<string | null>(null);
-  const [userReactions, setUserReactions] = useState<{ [commentId: string]: 'like' | 'dislike' | 'none' }>({}); // Para saber la reacción del usuario actual
+  const [userReactions, setUserReactions] = useState<{ [commentId: string]: 'like' | 'dislike' | 'none' }>({});
 
   const [newCommentContent, setNewCommentContent] = useState('');
   const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
@@ -84,6 +75,10 @@ export default function BlogPostDetailPage() {
     const fetchBlogPost = async () => {
       try {
         setLoadingPost(true);
+        if (!db) {
+          setPostError("Configuración de base de datos faltante.");
+          return;
+        }
         const postRef = doc(db, 'blogPosts', postId);
         const docSnap = await getDoc(postRef);
 
@@ -106,6 +101,11 @@ export default function BlogPostDetailPage() {
   // Cargar comentarios y reacciones del usuario en tiempo real
   useEffect(() => {
     if (!postId) return;
+    if (!db) {
+      setCommentError("Base de datos no inicializada.");
+      setLoadingComments(false);
+      return;
+    }
 
     setLoadingComments(true);
     setCommentError(null);
@@ -122,7 +122,6 @@ export default function BlogPostDetailPage() {
         ...doc.data() as Omit<Comment, 'id' | 'replies'>
       }));
 
-      // Construir una estructura jerárquica para las respuestas
       const commentsMap = new Map<string, Comment>();
       fetchedComments.forEach(comment => {
         commentsMap.set(comment.id, { ...comment, replies: [] });
@@ -148,21 +147,11 @@ export default function BlogPostDetailPage() {
       setLoadingComments(false);
     });
 
-    let unsubscribeReactions: () => void | undefined; // Puede ser undefined
+    let unsubscribeReactions: () => void | undefined;
 
-    // --- INICIO DE LA CORRECCIÓN ---
-    // Solo intentar cargar reacciones si el usuario está autenticado Y hay comentarios cargados
     if (isAuthenticated && user?.uid && comments.length > 0) {
       const commentIds = comments.map(c => c.id);
       
-      // Firestore 'in' filter tiene un límite de 10 elementos.
-      // Si tienes más de 10 comentarios, necesitarías hacer múltiples consultas
-      // o cargar todas las reacciones del usuario y filtrarlas en el cliente.
-      // Para simplificar, asumiremos que no excederá el límite de 10 para 'in' para este ejemplo.
-      // Si esperas muchos comentarios, considera una colección de 'userReactions' por comentario,
-      // o un enfoque diferente para el conteo de likes/dislikes.
-      
-      // ¡Asegurarse de que el array de IDs no esté vacío antes de la consulta 'in'!
       if (commentIds.length > 0) { 
         const qReactions = query(
           collection(db, 'commentReactions'),
@@ -180,21 +169,17 @@ export default function BlogPostDetailPage() {
           console.error("Error al cargar reacciones del usuario:", err);
         });
       } else {
-        // Si no hay commentIds, no hay reacciones que cargar, así que limpiar el estado
         setUserReactions({});
       }
     } else {
-      // Si el usuario no está autenticado o no hay user.uid, limpiar las reacciones del usuario
       setUserReactions({});
     }
-    // --- FIN DE LA CORRECCIÓN ---
-
 
     return () => {
       unsubscribeComments();
       if (unsubscribeReactions) unsubscribeReactions();
     };
-  }, [postId, isAuthenticated, user, comments.length]); // comments.length para re-evaluar reacciones si cambian los comentarios
+  }, [postId, isAuthenticated, user, comments.length]);
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,6 +189,8 @@ export default function BlogPostDetailPage() {
     }
 
     try {
+      if (!db) throw new Error("Base de datos no inicializada");
+      
       const commentData: Omit<Comment, 'id' | 'replies'> = {
         postId: postId,
         userId: user.uid,
@@ -219,10 +206,7 @@ export default function BlogPostDetailPage() {
       setNewCommentContent('');
       setReplyToCommentId(null);
       setReplyToUserName(null);
-      toast.success('Comentario agregado con éxito!', {
-        style: { background: colors.crimson, color: colors.white },
-        iconTheme: { primary: colors.white, secondary: colors.crimson },
-      });
+      toast.success('Comentario agregado con éxito!');
     } catch (err) {
       console.error("Error al agregar comentario:", err);
       toast.error("Error al agregar el comentario. Inténtalo de nuevo.");
@@ -238,12 +222,11 @@ export default function BlogPostDetailPage() {
 
   const handleLikeDislike = async (commentId: string, type: 'like' | 'dislike') => {
     if (!isAuthenticated || !user) {
-      toast.error("Debes iniciar sesión para reaccionar.", {
-        style: { background: colors.darkGray, color: colors.white },
-        iconTheme: { primary: colors.white, secondary: colors.darkGray },
-      });
+      toast.error("Debes iniciar sesión para reaccionar.");
       return;
     }
+
+    if (!db) return;
 
     const reactionDocId = `${user.uid}_${commentId}`;
     const reactionRef = doc(db, 'commentReactions', reactionDocId);
@@ -265,28 +248,21 @@ export default function BlogPostDetailPage() {
           const existingReactionType = reactionSnap.data().type;
 
           if (existingReactionType === type) {
-            // Si el usuario hace clic en el mismo tipo de reacción, la elimina (undo)
             if (type === 'like') newLikes--; else newDislikes--;
-            transaction.delete(reactionRef); // Eliminar la reacción
+            transaction.delete(reactionRef);
             toast(`Tu ${type} ha sido retirado.`, { icon: '👋' });
           } else {
-            // Si el usuario cambia de un tipo de reacción a otro
             if (existingReactionType === 'like') newLikes--; else newDislikes--;
             if (type === 'like') newLikes++; else newDislikes++;
             transaction.update(reactionRef, { type: type, timestamp: serverTimestamp() });
             toast(`Has cambiado tu reacción a ${type}.`, { icon: '🔄' });
           }
         } else {
-          // No existe una reacción, el usuario está reaccionando por primera vez
           if (type === 'like') newLikes++; else newDislikes++;
           transaction.set(reactionRef, { commentId, userId: user.uid, type, timestamp: serverTimestamp() });
-          toast(`Has dado ${type} a este comentario.`, {
-            style: { background: colors.crimson, color: colors.white },
-            iconTheme: { primary: colors.white, secondary: colors.crimson },
-          });
+          toast(`Has dado ${type} a este comentario.`);
         }
         
-        // Actualizar el conteo de likes/dislikes en el comentario
         transaction.update(commentRef, { likes: newLikes, dislikes: newDislikes });
       });
     } catch (err: any) {
@@ -295,53 +271,58 @@ export default function BlogPostDetailPage() {
     }
   };
 
-
-  // Función auxiliar para renderizar comentarios y sus respuestas recursivamente
   const renderComment = (comment: Comment) => {
-    const userReaction = userReactions[comment.id] || 'none'; // Obtener la reacción del usuario actual
+    const userReaction = userReactions[comment.id] || 'none';
     const isLiked = userReaction === 'like';
     const isDisliked = userReaction === 'dislike';
 
     return (
-      <div key={comment.id} className={`mb-4 ${comment.parentId ? 'ml-8 border-l pl-4' : ''}`} style={{ borderColor: colors.warmBeige }}>
-        <div className="flex items-start mb-2">
-          <UserCircleIcon className="h-8 w-8 mr-3" style={{ color: colors.darkGray }} />
+      <div key={comment.id} className={`mb-6 ${comment.parentId ? 'ml-8 md:ml-12 border-l border-white/10 pl-6' : ''}`}>
+        <div className="flex items-start mb-3">
+          <div className="w-10 h-10 rounded-full bg-[#151515] flex items-center justify-center mr-4 border border-white/5 flex-shrink-0">
+            <UserCircleIcon className="h-6 w-6 text-muted" />
+          </div>
           <div>
-            <p className="font-bold" style={{ color: colors.darkText }}>{comment.userName}</p>
-            <p className="text-xs text-gray-500">
+            <p className="font-serif text-[#F5F5F0] text-lg">{comment.userName}</p>
+            <p className="font-sans font-light text-xs text-muted">
               {comment.createdAt?.toDate().toLocaleDateString('es-ES', {
                 year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
               })}
             </p>
           </div>
         </div>
-        <p className="text-gray-700 mb-2">{comment.content}</p>
-        <div className="flex items-center space-x-4 text-sm text-gray-600">
+        
+        <div className={`p-4 rounded-sm font-sans font-light text-sm leading-relaxed mb-3 ${comment.parentId ? 'bg-[#151515] border border-white/5' : 'bg-[#111] border border-white/5'}`}>
+          <p className="text-muted">{comment.content}</p>
+        </div>
+        
+        <div className="flex items-center space-x-6 text-xs font-sans tracking-widest uppercase text-muted ml-2">
           <button
             onClick={() => handleLikeDislike(comment.id, 'like')}
-            className={`flex items-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isAuthenticated ? 'hover:text-crimson' : ''} ${isLiked ? 'text-crimson font-bold' : ''}`}
+            className={`flex items-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isAuthenticated ? 'hover:text-primary' : ''} ${isLiked ? 'text-primary' : ''}`}
             disabled={!isAuthenticated}
           >
-            <HandThumbUpIcon className="h-5 w-5 mr-1" /> {comment.likes}
+            <HandThumbUpIcon className="h-4 w-4 mr-1.5" /> {comment.likes}
           </button>
           <button
             onClick={() => handleLikeDislike(comment.id, 'dislike')}
-            className={`flex items-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isAuthenticated ? 'hover:text-crimson' : ''} ${isDisliked ? 'text-crimson font-bold' : ''}`}
+            className={`flex items-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isAuthenticated ? 'hover:text-primary' : ''} ${isDisliked ? 'text-primary' : ''}`}
             disabled={!isAuthenticated}
           >
-            <HandThumbDownIcon className="h-5 w-5 mr-1" /> {comment.dislikes}
+            <HandThumbDownIcon className="h-4 w-4 mr-1.5" /> {comment.dislikes}
           </button>
           {isAuthenticated && (
             <button
               onClick={() => handleReplyClick(comment.id, comment.userName)}
-              className="flex items-center hover:text-crimson transition-colors"
+              className="flex items-center hover:text-primary transition-colors"
             >
-              <ArrowUturnLeftIcon className="h-5 w-5 mr-1" /> Responder
+              <ArrowUturnLeftIcon className="h-4 w-4 mr-1.5" /> Responder
             </button>
           )}
         </div>
+        
         {comment.replies && comment.replies.length > 0 && (
-          <div className="mt-4">
+          <div className="mt-6">
             {comment.replies.map(reply => renderComment(reply))}
           </div>
         )}
@@ -351,25 +332,20 @@ export default function BlogPostDetailPage() {
 
   if (loadingPost || authLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ backgroundColor: colors.lightGrayBg, color: colors.darkText }}>
-        <p className="text-xl font-bold">Cargando publicación...</p>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mt-4" style={{ borderColor: colors.crimson }}></div>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center opacity-70">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-primary border-r-2 border-r-transparent mb-4"></div>
+        <p className="font-sans font-light tracking-widest uppercase text-xs text-muted">Buscando historia...</p>
       </div>
     );
   }
 
   if (postError || !blogPost) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8" style={{ backgroundColor: colors.lightGrayBg, color: colors.darkText }}>
-        <h2 className="text-2xl font-bold text-red-600 mb-4">{postError || "Publicación no encontrada."}</h2>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center">
+        <h2 className="text-2xl font-serif text-accent mb-6">{postError || "Historia no encontrada."}</h2>
         <Link href="/blog" passHref>
-          <button
-            className="px-6 py-3 rounded-md font-bold text-white transition-all duration-300 ease-in-out shadow-md"
-            style={{ backgroundColor: colors.crimson }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#8B1313')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.crimson)}
-          >
-            Volver al Blog
+          <button className="px-6 py-3 rounded-sm font-sans tracking-widest uppercase text-xs text-white bg-accent hover:bg-[#8B1313] transition-colors duration-300">
+            Volver al Diario
           </button>
         </Link>
       </div>
@@ -377,90 +353,119 @@ export default function BlogPostDetailPage() {
   }
 
   return (
-    <div className="font-['EB_Garamond'] py-16 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: colors.lightGrayBg, color: colors.darkText }}>
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-xl p-8">
+    <div className="bg-background text-foreground min-h-screen pt-32 pb-24 relative z-10">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
         {/* Breadcrumbs */}
-        <div className="text-sm text-gray-600 mb-4">
-          <Link href="/" className="hover:underline">Inicio</Link> /
-          <Link href="/blog" className="hover:underline ml-1">Blog</Link> /
-          <span className="ml-1 font-semibold">{blogPost.title}</span>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-xs font-sans tracking-widest uppercase text-muted mb-8 flex items-center gap-2"
+        >
+          <Link href="/" className="hover:text-primary transition-colors">Inicio</Link>
+          <span>/</span>
+          <Link href="/blog" className="hover:text-primary transition-colors">El Diario</Link>
+          <span>/</span>
+          <span className="text-foreground truncate max-w-xs">{blogPost.title}</span>
+        </motion.div>
 
-        {/* Contenido de la Publicación */}
-        <h1 className="text-4xl font-bold mb-4" style={{ color: colors.crimson }}>{blogPost.title}</h1>
-        <p className="text-sm text-gray-600 mb-6">
-          Por <span className="font-semibold">{blogPost.authorName}</span> el {blogPost.createdAt?.toDate().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
-        </p>
-        <div className="relative w-full h-80 bg-gray-100 flex items-center justify-center overflow-hidden rounded-md mb-8">
+        {/* Header Artículo */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h1 className="text-4xl md:text-5xl font-serif font-light text-[#F5F5F0] mb-6 leading-tight">
+            {blogPost.title}
+          </h1>
+          
+          <div className="flex items-center gap-4 mb-10 pb-6 border-b border-white/10">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-sans tracking-widest uppercase text-muted">Por</span>
+              <span className="text-xs font-sans tracking-widest uppercase text-primary">{blogPost.authorName}</span>
+            </div>
+            <span className="w-1 h-1 rounded-full bg-primary/30"></span>
+            <span className="text-xs font-sans tracking-widest uppercase text-muted">
+              {blogPost.createdAt?.toDate().toLocaleDateString('es-ES', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Imagen Principal */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="relative w-full aspect-[21/9] bg-[#0a0a0a] rounded-sm mb-12 overflow-hidden border border-white/5"
+        >
           <Image
             src={blogPost.img || '/placeholder-blog.jpg'}
             alt={blogPost.alt || blogPost.title}
             fill
             sizes="100vw"
-            className="object-cover rounded-md"
+            className="object-cover opacity-80"
             priority
             onError={(e) => {
               (e.target as HTMLImageElement).src = '/placeholder-blog.jpg';
             }}
           />
-        </div>
-        <div className="prose max-w-none text-gray-800 leading-relaxed mb-12" dangerouslySetInnerHTML={{ __html: blogPost.content }} />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-80"></div>
+        </motion.div>
+
+        {/* Contenido */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="prose prose-invert prose-lg max-w-none font-sans font-light leading-relaxed text-muted mb-20 prose-headings:font-serif prose-headings:font-light prose-headings:text-[#F5F5F0] prose-a:text-primary prose-a:no-underline hover:prose-a:underline" 
+          dangerouslySetInnerHTML={{ __html: blogPost.content }} 
+        />
 
         {/* Sección de Comentarios */}
-        <section className="mt-12 pt-8 border-t" style={{ borderColor: colors.warmBeige }}>
-          <h2 className="text-3xl font-bold mb-6" style={{ color: colors.darkText }}>Comentarios</h2>
+        <section className="mt-16 pt-12 border-t border-white/10">
+          <h2 className="text-3xl font-serif font-light text-[#F5F5F0] mb-8">Comentarios & Reflexiones</h2>
 
           {/* Formulario para agregar nuevo comentario */}
           {isAuthenticated ? (
-            <form onSubmit={handleAddComment} className="mb-8 p-6 rounded-lg shadow-inner" style={{ backgroundColor: colors.lightGrayBg }}>
-              <h3 className="text-xl font-bold mb-4" style={{ color: colors.darkText }}>
-                {replyToCommentId ? `Responder a ${replyToUserName}` : 'Agregar un comentario'}
+            <div className="mb-12 bg-[#111] p-8 rounded-sm border border-white/5">
+              <h3 className="text-sm font-sans tracking-widest uppercase text-muted mb-6">
+                {replyToCommentId ? `Responder a ${replyToUserName}` : 'Deja una reflexión'}
               </h3>
-              <textarea
-                id="comment-input"
-                className="w-full p-3 border rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-crimson"
-                rows={4}
-                placeholder={replyToCommentId ? `Tu respuesta para @${replyToUserName}...` : "Escribe tu comentario aquí..."}
-                value={newCommentContent}
-                onChange={(e) => setNewCommentContent(e.target.value)}
-                style={{ borderColor: colors.warmBeige, backgroundColor: colors.white, color: colors.darkText }}
-              ></textarea>
-              <div className="flex justify-end space-x-2">
-                {replyToCommentId && (
+              <form onSubmit={handleAddComment}>
+                <textarea
+                  id="comment-input"
+                  className="w-full px-4 py-3 bg-[#151515] border border-white/10 text-[#F5F5F0] rounded-sm focus:outline-none focus:border-primary transition-colors font-sans mb-4"
+                  rows={4}
+                  placeholder={replyToCommentId ? `Tu respuesta para @${replyToUserName}...` : "Escribe tu comentario aquí..."}
+                  value={newCommentContent}
+                  onChange={(e) => setNewCommentContent(e.target.value)}
+                ></textarea>
+                <div className="flex justify-end space-x-4">
+                  {replyToCommentId && (
+                    <button
+                      type="button"
+                      onClick={() => { setReplyToCommentId(null); setReplyToUserName(null); setNewCommentContent(''); }}
+                      className="px-6 py-3 bg-transparent border border-white/20 hover:border-white/50 text-foreground tracking-widest uppercase text-xs transition-all duration-300 rounded-sm"
+                    >
+                      Cancelar
+                    </button>
+                  )}
                   <button
-                    type="button"
-                    onClick={() => { setReplyToCommentId(null); setReplyToUserName(null); setNewCommentContent(''); }}
-                    className="px-4 py-2 rounded-md font-bold text-sm transition-all duration-300 ease-in-out"
-                    style={{ backgroundColor: colors.darkGray, color: colors.white }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#2E2E2E')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.darkGray)}
+                    type="submit"
+                    className="px-8 py-3 bg-accent hover:bg-[#8B1313] text-white tracking-widest uppercase text-xs font-bold transition-all duration-300 rounded-sm disabled:opacity-50"
+                    disabled={!newCommentContent.trim()}
                   >
-                    Cancelar Respuesta
+                    Publicar
                   </button>
-                )}
-                <button
-                  type="submit"
-                  className="px-6 py-2 rounded-md font-bold text-white transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: colors.crimson }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#8B1313')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.crimson)}
-                  disabled={!newCommentContent.trim()}
-                >
-                  Publicar
-                </button>
-              </div>
-            </form>
+                </div>
+              </form>
+            </div>
           ) : (
-            <div className="mb-8 p-6 rounded-lg text-center" style={{ backgroundColor: colors.warmBeige, color: colors.darkText }}>
-              <p className="text-lg font-medium mb-4">Inicia sesión para dejar un comentario o responder.</p>
+            <div className="mb-12 p-8 bg-[#111] border border-white/5 rounded-sm text-center">
+              <p className="font-sans font-light text-muted mb-6">Inicia sesión para compartir tus reflexiones.</p>
               <Link href="/login" passHref>
-                <button
-                  className="px-6 py-3 rounded-md font-bold text-white transition-all duration-300 ease-in-out"
-                  style={{ backgroundColor: colors.crimson }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#8B1313')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colors.crimson)}
-                >
-                  Iniciar Sesión
+                <button className="px-8 py-3 bg-transparent border border-white/20 hover:border-primary text-foreground hover:text-primary tracking-widest uppercase text-xs transition-all duration-300 rounded-sm">
+                  Identificarse
                 </button>
               </Link>
             </div>
@@ -468,20 +473,19 @@ export default function BlogPostDetailPage() {
 
           {/* Lista de Comentarios */}
           {loadingComments ? (
-            <div className="text-center py-10">
-              <p className="text-lg mb-4">Cargando comentarios...</p>
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 mx-auto mt-4" style={{ borderColor: colors.darkGray }}></div>
+            <div className="flex justify-center py-10 opacity-70">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary border-r-2 border-r-transparent"></div>
             </div>
           ) : commentError ? (
-            <div className="text-center py-10">
-              <p className="text-lg text-red-600">{commentError}</p>
+            <div className="text-center py-10 bg-[#111] border border-white/5 rounded-sm">
+              <p className="font-serif text-accent">{commentError}</p>
             </div>
           ) : comments.length === 0 ? (
-            <div className="text-center py-10">
-              <p className="text-lg text-gray-600">Sé el primero en comentar esta publicación.</p>
+            <div className="text-center py-12 bg-[#111] border border-white/5 rounded-sm">
+              <p className="font-sans font-light text-muted italic">Sé la primera persona en compartir sus pensamientos sobre esta historia.</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {comments.map(comment => renderComment(comment))}
             </div>
           )}
