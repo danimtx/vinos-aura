@@ -174,6 +174,10 @@ export default function CheckoutPage() {
           timestamp: serverTimestamp(),
         };
 
+        if (!db) {
+          throw new Error("La conexión a la base de datos no está disponible.");
+        }
+
         await addDoc(collection(db, 'orders'), orderData);
         clearCart();
         // Espera 1.5s para mostrar el mensaje de éxito antes de redirigir

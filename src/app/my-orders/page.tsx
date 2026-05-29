@@ -75,6 +75,12 @@ export default function MyOrdersPage() {
       setOrdersLoading(true);
       setOrdersError(null);
 
+      if (!db) {
+        setOrdersError("La conexión a la base de datos no está disponible en este momento.");
+        setOrdersLoading(false);
+        return;
+      }
+
       // Consulta para obtener pedidos del usuario actual, ordenados por fecha descendente
       const ordersCollectionRef = collection(db, 'orders');
       const q = query(
